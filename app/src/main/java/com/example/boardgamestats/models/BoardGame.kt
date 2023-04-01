@@ -1,9 +1,16 @@
 package com.example.boardgamestats.models
 
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
+@Entity
 data class BoardGame(
-    val id: String,
+    @PrimaryKey
+    val id: Int,
     val name: String,
-    val image: ImageVector
+    val publishYear: Int,
+    var thumbnail: String? = null,
+    var description: String? = null,
+    val inCollection: Boolean = false,
+    var image: String? = null
 )

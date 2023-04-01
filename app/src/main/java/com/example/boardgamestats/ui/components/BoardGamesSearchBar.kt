@@ -16,8 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.example.boardgamestats.api.BoardGame
 import com.example.boardgamestats.api.queryXmlApi
+import com.example.boardgamestats.models.BoardGame
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -57,6 +57,7 @@ fun BoardGamesSearchBar() {
                     searchJob = GlobalScope.launch {
                         searchResults =
                             queryXmlApi("https://www.boardgamegeek.com/xmlapi2/search?type=boardgame&query=$text")
+                                .sortedByDescending { it.publishYear }
                         isLoading = false
                     }
                 }

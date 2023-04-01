@@ -19,6 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.boardgamestats.screens.CollectionScreen
+import com.example.boardgamestats.screens.NavigationGraph
 import com.example.boardgamestats.screens.PlayedGamesScreen
 
 sealed class BottomBarScreen(
@@ -49,12 +50,12 @@ fun BottomNavigationBar(navController: NavHostController) {
 
             NavigationBarItem(
                 icon = {
-                       Crossfade(targetState = selected) { selected ->
-                           Icon(
-                               imageVector = if (selected) screen.selectedIcon else screen.icon,
-                               contentDescription = null
-                           )
-                       }
+                    Crossfade(targetState = selected) { selected ->
+                        Icon(
+                            imageVector = if (selected) screen.selectedIcon else screen.icon,
+                            contentDescription = null
+                        )
+                    }
                 },
                 label = { Text(screen.title) },
                 selected = selected,
@@ -67,10 +68,14 @@ fun BottomNavigationBar(navController: NavHostController) {
 }
 
 @Composable
-fun BottomNavigationGraph(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = BottomBarScreen.Collection.route) {
+fun BottomNavigationGraph(navController: NavHostController, navigateToDetails: (Int) -> Unit) {
+    NavHost(
+        navController = navController,
+        route = NavigationGraph.Main,
+        startDestination = BottomBarScreen.Collection.route
+    ) {
         composable(BottomBarScreen.Collection.route) {
-            CollectionScreen()
+            CollectionScreen(navigateToDetails)
         }
         composable(BottomBarScreen.PlayedGames.route) {
             PlayedGamesScreen()
