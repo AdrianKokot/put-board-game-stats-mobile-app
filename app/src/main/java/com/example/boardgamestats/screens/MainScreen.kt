@@ -111,21 +111,26 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int) {
                     },
                     actions = {
                         Crossfade(boardGame.inCollection) { isInCollection ->
-                            IconButton(onClick = {
-                                GlobalScope.launch {
-                                    dao.updateCollection(gameId, !isInCollection)
+                            PlainTooltipBox(
+                                tooltip = {
+                                    Text(if (isInCollection) "Remove from collection" else "Add to collection")
+                                }) {
+                                IconButton(onClick = {
+                                    GlobalScope.launch {
+                                        dao.updateCollection(gameId, !isInCollection)
 
-                                    snackbarHostState.showSnackbar(
-                                        message = if (isInCollection) "Removed from collection" else "Added to collection",
-                                        duration = SnackbarDuration.Short,
-                                        withDismissAction = true
-                                    )
-                                }
-                            }) {
-                                if (isInCollection) {
-                                    Icon(Icons.Filled.BookmarkAdded, contentDescription = "Remove from collection")
-                                } else {
-                                    Icon(Icons.Outlined.BookmarkAdd, contentDescription = "Add to collection")
+                                        snackbarHostState.showSnackbar(
+                                            message = if (isInCollection) "Removed from collection" else "Added to collection",
+                                            duration = SnackbarDuration.Short,
+                                            withDismissAction = true
+                                        )
+                                    }
+                                }, modifier = Modifier.tooltipAnchor()) {
+                                    if (isInCollection) {
+                                        Icon(Icons.Filled.BookmarkAdded, contentDescription = "Remove from collection")
+                                    } else {
+                                        Icon(Icons.Outlined.BookmarkAdd, contentDescription = "Add to collection")
+                                    }
                                 }
                             }
                         }
