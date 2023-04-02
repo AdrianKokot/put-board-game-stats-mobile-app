@@ -1,6 +1,7 @@
 package com.example.boardgamestats.ui.components
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -13,10 +14,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.example.boardgamestats.api.queryXmlApi
+import com.example.boardgamestats.database.BoardGameDatabase
 import com.example.boardgamestats.models.BoardGame
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -26,7 +29,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-fun BoardGamesSearchBar() {
+fun BoardGamesSearchBar(navigateToDetails: (Int) -> Unit) {
     var text by rememberSaveable { mutableStateOf("") }
     var previousText by rememberSaveable { mutableStateOf("") }
     var active by rememberSaveable { mutableStateOf(false) }
@@ -34,7 +37,7 @@ fun BoardGamesSearchBar() {
     var searchResults by rememberSaveable { mutableStateOf(emptyList<BoardGame>()) }
     var isLoading by rememberSaveable { mutableStateOf(false) }
 
-    var searchJob by rememberSaveable { mutableStateOf<Job?>(null) }
+    var searchJob by remember { mutableStateOf<Job?>(null) }
     var wasSearched by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(active) {
@@ -43,6 +46,9 @@ fun BoardGamesSearchBar() {
     }
 
     val keyboardController = LocalSoftwareKeyboardController.current
+
+    val dao = BoardGameDatabase.getDatabase(LocalContext.current)
+        .boardGameDao()
 
     Box(Modifier.fillMaxWidth().zIndex(3f).padding(bottom = 8.dp)) {
         SearchBar(modifier = Modifier.align(Alignment.TopCenter).padding(0.dp),
@@ -58,6 +64,12 @@ fun BoardGamesSearchBar() {
                         searchResults =
                             queryXmlApi("https://www.boardgamegeek.com/xmlapi2/search?type=boardgame&query=$text")
                                 .sortedByDescending { it.publishYear }
+
+                        if (searchResults.isNotEmpty()) {
+                            dao
+                                .insertAll(*searchResults.toTypedArray())
+                        }
+
                         isLoading = false
                     }
                 }
@@ -127,6 +139,9 @@ fun BoardGamesSearchBar() {
                             ListItem(
                                 headlineContent = { Text(boardGame.name) },
                                 supportingContent = { Text(boardGame.publishYear.toString()) },
+                                modifier = Modifier.clickable(onClick = {
+                                    navigateToDetails(boardGame.id)
+                                })
                             )
                         }
                     }

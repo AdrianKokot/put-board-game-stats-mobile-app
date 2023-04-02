@@ -9,8 +9,9 @@ data class BoardGame(
     val id: Int,
     val name: String,
     val publishYear: Int,
-    var thumbnail: String? = null,
-    var description: String? = null,
+    val thumbnail: String? = null,
+    val description: String? = null,
     val inCollection: Boolean = false,
-    var image: String? = null
+    val image: String? = null,
+    val hasDetails: Boolean = false
 )

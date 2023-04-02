@@ -48,17 +48,20 @@ interface BoardGameDao {
     @Query("SELECT * FROM boardgame WHERE inCollection = TRUE")
     fun getCollection(): Flow<List<BoardGame>>
 
-    @Query("SELECT * FROM boardgame WHERE name LIKE :name LIMIT 1")
-    fun findByName(name: String): BoardGame
-
     @Query("SELECT * FROM boardgame WHERE id = :id LIMIT 1")
     fun get(id: Int): Flow<BoardGame>
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertAll(vararg boardGames: BoardGame)
 
     @Delete
     fun delete(boardGame: BoardGame)
+
+    @Query("UPDATE boardgame SET inCollection = :inCollection WHERE id = :id")
+    fun updateCollection(id: Int, inCollection: Boolean)
+
+    @Query("UPDATE boardgame SET thumbnail = :thumbnail, image = :image, description = :description, hasDetails = true WHERE id = :id")
+    fun updateBoardGameDetails(id: Int, thumbnail: String, image: String, description: String)
 }
 
 @Database(entities = [BoardGame::class], version = 1, exportSchema = false)
@@ -79,9 +82,7 @@ abstract class BoardGameDatabase : RoomDatabase() {
                                 224517,
                                 "Brass: Birmingham",
                                 2018,
-                                thumbnail = "https://cf.geekdo-images.com/x3zxjr-Vw5iU4yDPg70Jgw__thumb/img/o18rjEemoWaVru9Y2TyPwuIaRfE=/fit-in/200x150/filters:strip_icc()/pic3490053.jpg",
-                                inCollection = true,
-                                image = "https://cf.geekdo-images.com/x3zxjr-Vw5iU4yDPg70Jgw__original/img/FpyxH41Y6_ROoePAilPNEhXnzO8=/0x0/filters:format(jpeg)/pic3490053.jpg"
+                                inCollection = true
                             ),
                             BoardGame(28720, "Brass: Lancashire", 2007)
                         )
@@ -95,7 +96,7 @@ abstract class BoardGameDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): BoardGameDatabase {
             return Instance ?: synchronized(this) {
-                Room.databaseBuilder(context, BoardGameDatabase::class.java, "board-game-stats")
+                Room.databaseBuilder(context, BoardGameDatabase::class.java, "board-game-stats-2")
                     .addCallback(seedDatabaseCallback(context))
                     .build()
                     .also { Instance = it }
