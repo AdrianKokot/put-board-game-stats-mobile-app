@@ -1,21 +1,22 @@
 package com.example.boardgamestats.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import androidx.navigation.NavOptions
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import com.example.boardgamestats.database.BoardGameDatabase
 import com.example.boardgamestats.ui.extensions.customTabIndicatorOffset
 
@@ -63,21 +64,26 @@ fun CollectionScreen(navigateToDetails: (Int) -> Unit) {
 }
 
 @Composable
-fun GamesCollection(navigateToDetails: (Int) -> Unit){
+fun GamesCollection(navigateToDetails: (Int) -> Unit) {
     val list = BoardGameDatabase.getDatabase(LocalContext.current)
         .boardGameDao()
         .getCollection()
         .collectAsState(initial = emptyList())
 
-    LazyColumn {
+    LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
         itemsIndexed(list.value) { index, boardGame ->
             ListItem(
                 headlineContent = { Text(boardGame.name) },
                 supportingContent = { Text(boardGame.publishYear.toString()) },
                 leadingContent = {
-                    AsyncImage(
+                    SubcomposeAsyncImage(
+                        modifier = Modifier.width(64.dp).height(64.dp).clip(MaterialTheme.shapes.extraSmall),
                         model = boardGame.thumbnail,
-                        contentDescription = boardGame.name
+                        contentDescription = boardGame.name,
+                        contentScale = ContentScale.Crop,
+                        loading = {
+                            Box(Modifier.matchParentSize().background(MaterialTheme.colorScheme.secondaryContainer))
+                        }
                     )
                 },
                 modifier = Modifier.clickable { navigateToDetails(boardGame.id) }
