@@ -18,6 +18,9 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import com.example.boardgamestats.database.BoardGameDatabase
+import com.example.boardgamestats.models.BoardGame
+import com.example.boardgamestats.models.BoardGameThingItem
+import com.example.boardgamestats.ui.animations.SkeletonAnimatedColor
 import com.example.boardgamestats.ui.extensions.customTabIndicatorOffset
 
 @Composable
@@ -65,28 +68,34 @@ fun CollectionScreen(navigateToDetails: (Int) -> Unit) {
 
 @Composable
 fun GamesCollection(navigateToDetails: (Int) -> Unit) {
-    val list = BoardGameDatabase.getDatabase(LocalContext.current)
+    BoardGameDatabase.getDatabase(LocalContext.current)
         .boardGameDao()
         .getCollection()
         .collectAsState(initial = emptyList())
+        .let { state ->
+            CollectionList(state.value) { navigateToDetails(it.id) }
+        }
+}
 
+@Composable
+fun CollectionList(list: List<BoardGameThingItem>, onItemClick: (item: BoardGameThingItem) -> Unit) {
     LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
-        itemsIndexed(list.value) { index, boardGame ->
+        itemsIndexed(list) { _, item ->
             ListItem(
-                headlineContent = { Text(boardGame.name) },
-                supportingContent = { Text(boardGame.publishYear.toString()) },
+                headlineContent = { Text(item.name) },
+                supportingContent = { Text(item.publishYear.toString()) },
                 leadingContent = {
                     SubcomposeAsyncImage(
                         modifier = Modifier.width(64.dp).height(64.dp).clip(MaterialTheme.shapes.extraSmall),
-                        model = boardGame.thumbnail,
-                        contentDescription = boardGame.name,
+                        model = item.thumbnail,
+                        contentDescription = item.name,
                         contentScale = ContentScale.Crop,
                         loading = {
-                            Box(Modifier.matchParentSize().background(MaterialTheme.colorScheme.secondaryContainer))
+                            Box(Modifier.matchParentSize().background(SkeletonAnimatedColor()))
                         }
                     )
                 },
-                modifier = Modifier.clickable { navigateToDetails(boardGame.id) }
+                modifier = Modifier.clickable { onItemClick(item) }
             )
         }
     }
@@ -95,18 +104,13 @@ fun GamesCollection(navigateToDetails: (Int) -> Unit) {
 
 @Composable
 fun ExpansionsCollection() {
-    LazyColumn {
-        items(200) {
-            ListItem(
-                headlineContent = { Text("Expansion $it") },
-                supportingContent = { Text("Supporting text") },
-                leadingContent = {
-                    AsyncImage(
-                        model = "https://api.lorem.space/image?w=150&h=180",
-                        contentDescription = "Translated description of what the image contains"
-                    )
-                }
-            )
+    BoardGameDatabase.getDatabase(LocalContext.current)
+        .boardGameExpansionDao()
+        .getCollection()
+        .collectAsState(initial = emptyList())
+        .let { state ->
+            CollectionList(state.value) {  }
         }
-    }
 }
+
+

@@ -2,10 +2,9 @@ package com.example.boardgamestats.database
 
 import android.content.Context
 import androidx.room.*
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.boardgamestats.models.BoardGame
+import com.example.boardgamestats.models.BoardGameExpansion
 import kotlinx.coroutines.flow.Flow
-import java.util.concurrent.Executors
 
 //
 //@Entity
@@ -41,6 +40,30 @@ import java.util.concurrent.Executors
 //)
 
 @Dao
+interface BoardGameExpansionDao {
+    @Query("SELECT * FROM boardgameexpansion")
+    fun getAll(): Flow<List<BoardGameExpansion>>
+
+    @Query("SELECT * FROM boardgameexpansion WHERE inCollection = TRUE")
+    fun getCollection(): Flow<List<BoardGameExpansion>>
+
+    @Query("SELECT * FROM boardgameexpansion WHERE id = :id LIMIT 1")
+    fun get(id: Int): Flow<BoardGameExpansion>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertAll(vararg boardGames: BoardGameExpansion)
+
+    @Delete
+    fun delete(boardGame: BoardGameExpansion)
+
+    @Query("UPDATE boardgameexpansion SET inCollection = :inCollection WHERE id = :id")
+    fun updateCollection(id: Int, inCollection: Boolean)
+
+    @Query("UPDATE boardgameexpansion SET thumbnail = :thumbnail, image = :image, description = :description, hasDetails = true WHERE id = :id")
+    fun updateBoardGameDetails(id: Int, thumbnail: String, image: String, description: String)
+}
+
+@Dao
 interface BoardGameDao {
     @Query("SELECT * FROM boardgame")
     fun getAll(): Flow<List<BoardGame>>
@@ -64,40 +87,18 @@ interface BoardGameDao {
     fun updateBoardGameDetails(id: Int, thumbnail: String, image: String, description: String)
 }
 
-@Database(entities = [BoardGame::class], version = 1, exportSchema = false)
+@Database(entities = [BoardGame::class, BoardGameExpansion::class], version = 1, exportSchema = false)
 abstract class BoardGameDatabase : RoomDatabase() {
     abstract fun boardGameDao(): BoardGameDao
+    abstract fun boardGameExpansionDao(): BoardGameExpansionDao
 
     companion object {
-        private fun seedDatabaseCallback(context: Context): Callback {
-            return object : Callback() {
-                override fun onCreate(db: SupportSQLiteDatabase) {
-                    super.onCreate(db)
-
-                    Executors.newSingleThreadExecutor().execute {
-                        val dao = getDatabase(context).boardGameDao()
-
-                        dao.insertAll(
-                            BoardGame(
-                                224517,
-                                "Brass: Birmingham",
-                                2018,
-                                inCollection = true
-                            ),
-                            BoardGame(28720, "Brass: Lancashire", 2007)
-                        )
-                    }
-                }
-            }
-        }
-
         @Volatile
         private var Instance: BoardGameDatabase? = null
 
         fun getDatabase(context: Context): BoardGameDatabase {
             return Instance ?: synchronized(this) {
-                Room.databaseBuilder(context, BoardGameDatabase::class.java, "board-game-stats-2")
-                    .addCallback(seedDatabaseCallback(context))
+                Room.databaseBuilder(context, BoardGameDatabase::class.java, "board-game-stats-3")
                     .build()
                     .also { Instance = it }
             }

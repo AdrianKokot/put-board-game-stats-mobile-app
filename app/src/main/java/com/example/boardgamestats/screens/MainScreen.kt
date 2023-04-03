@@ -24,10 +24,10 @@ import androidx.navigation.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import com.example.boardgamestats.api.queryXmlApi
 import com.example.boardgamestats.database.BoardGameDatabase
+import com.example.boardgamestats.ui.animations.SkeletonAnimatedColor
 import com.example.boardgamestats.ui.components.BoardGamesSearchBar
 import com.example.boardgamestats.ui.components.BottomNavigationBar
 import com.example.boardgamestats.ui.components.BottomNavigationGraph
@@ -168,7 +168,7 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int) {
                                 .clip(RoundedCornerShape(8.dp)),
                             contentScale = ContentScale.Crop,
                             loading = {
-                                Box(Modifier.matchParentSize().background(MaterialTheme.colorScheme.secondaryContainer))
+                                Box(Modifier.matchParentSize().background(SkeletonAnimatedColor()))
                             }
                         )
                         Divider(modifier = Modifier.padding(horizontal = 16.dp))
