@@ -10,7 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 
 private val LightColors = lightColorScheme(
     primary = md_theme_light_primary,
@@ -98,7 +98,8 @@ fun BoardGameStatsTheme(
     if (!view.isInEditMode) {
         SideEffect {
             (view.context as Activity).window.statusBarColor = Color.Transparent.toArgb()
-            ViewCompat.getWindowInsetsController(view)?.isAppearanceLightStatusBars = darkTheme
+            WindowCompat.getInsetsController((view.context as Activity).window, view).isAppearanceLightStatusBars =
+                !darkTheme
         }
     }
 
