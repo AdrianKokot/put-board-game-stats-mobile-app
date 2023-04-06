@@ -10,24 +10,20 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -39,6 +35,8 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.SubcomposeAsyncImage
 import com.example.boardgamestats.api.queryXmlApi
 import com.example.boardgamestats.database.BoardGameDatabase
+import com.example.boardgamestats.database.Gameplay
+import com.example.boardgamestats.database.PlayerWithScoreDto
 import com.example.boardgamestats.ui.animations.SkeletonAnimatedColor
 import com.example.boardgamestats.ui.components.*
 import kotlinx.coroutines.GlobalScope
@@ -108,67 +106,47 @@ fun NavGraphBuilder.detailsNavGraph(navController: NavHostController) {
     }
 }
 
-data class Player(var name: String, var score: String)
-
-data class NewGamePlayUiState(
-    val players: List<Player> = emptyList(), val date: Instant = Instant.now()
-)
+data class GameplayPlayer(var name: String, var score: String)
 
 class NewGamePlayViewModel : ViewModel() {
-    //    private val _uiState = MutableStateFlow(NewGamePlayUiState())
-//    val uiState = _uiState.asStateFlow()
-    private val _players = mutableStateListOf<Player>()
-    val players: List<Player> = _players
+    private val _players = mutableStateListOf<GameplayPlayer>()
+    val players: List<GameplayPlayer> = _players
 
-    fun addPlayer(player: Player) {
-//        _uiState.update { state ->
-//            state.copy(players = state.players + player)
-//        }
+    fun addPlayer(player: GameplayPlayer) {
         _players.add(player)
     }
 
-    fun removePlayer(player: Player) {
-//        _uiState.update { state ->
-//            state.copy(players = state.players - player)
-//        }
+    fun removePlayer(player: GameplayPlayer) {
         _players.remove(player)
     }
 
-    fun updatePlayer(player: Player, newName: String? = null, newScore: String? = null) {
-//        _uiState.update { state ->
-//
-//            state.copy(players = state.players.map {
-//                if (it == player) it.copy(
-//                    name = newName ?: player.name,
-//                    score = newScore ?: player.score
-//                ) else it
-//            })
-//        }
-
-//        }
+    fun updatePlayer(player: GameplayPlayer, newName: String? = null, newScore: String? = null) {
         val index = _players.indexOf(player)
         _players[index] = _players[index].copy(name = newName ?: player.name, score = newScore ?: player.score)
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddNewGamePlayScreen(
     popBackStack: () -> Unit, gameId: Int, newGamePlayViewModel: NewGamePlayViewModel = viewModel()
 ) {
+    val dao = BoardGameDatabase.getDatabase(LocalContext.current)
+        .playerDao()
+
+    val gameplayDao = BoardGameDatabase.getDatabase(LocalContext.current)
+        .gameplayDao()
+
     val openDialog = remember { mutableStateOf(false) }
 
     var dateInstant by remember { mutableStateOf(Instant.now()) }
     val datePickerState = rememberDatePickerState(dateInstant.toEpochMilli())
 
     val players = newGamePlayViewModel.players
-    val options = listOf("Option 1", "Option 2", "Option 3", "Option 4", "Option 5")
 
-
-    val dropDownOptions = remember { mutableStateOf(listOf<String>()) }
-    val textFieldValue = remember { mutableStateOf(TextFieldValue()) }
-    val dropDownExpanded = remember { mutableStateOf(false) }
-
+    val alreadyExistingPlayerNames = dao.getAll()
+        .collectAsState(emptyList()).value
+        .map { it.name }.toList()
 
     if (openDialog.value) {
         val confirmEnabled = remember { derivedStateOf { datePickerState.selectedDateMillis != null } }
@@ -201,9 +179,22 @@ fun AddNewGamePlayScreen(
             }
         }, actions = {
             Button(onClick = {
-//                             TODO: save data
-                popBackStack()
 
+                GlobalScope.launch {
+                    gameplayDao.insert(
+                        Gameplay(
+                            boardGameId = gameId,
+                            date = dateInstant.toEpochMilli()
+                        ),
+                        players.map {
+                            PlayerWithScoreDto(
+                                playerName = it.name,
+                                score = it.score.toIntOrNull() ?: 0
+                            )
+                        },
+                    )
+                }
+                popBackStack()
             }, modifier = Modifier.padding(end = 16.dp)) {
                 Text("Save")
             }
@@ -246,7 +237,7 @@ fun AddNewGamePlayScreen(
                         text = "Players"
                     )
                     Button(onClick = {
-                        newGamePlayViewModel.addPlayer(Player("", ""))
+                        newGamePlayViewModel.addPlayer(GameplayPlayer("", ""))
                     }) {
                         Text("Add")
                     }
@@ -258,7 +249,8 @@ fun AddNewGamePlayScreen(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            TextField(label = { Text("Score") },
+                            TextField(
+                                label = { Text("Score") },
                                 value = player.score,
                                 onValueChange = {
                                     newGamePlayViewModel.updatePlayer(
@@ -271,7 +263,8 @@ fun AddNewGamePlayScreen(
 
                             TextFieldWithDropdown(label = { Text("Name") }, value = player.name, onValueChange = {
                                 newGamePlayViewModel.updatePlayer(player, newName = it)
-                            }, modifier = Modifier.weight(1f).padding(end = 8.dp)
+                            }, modifier = Modifier.weight(1f).padding(end = 8.dp),
+                                options = alreadyExistingPlayerNames
                             )
 
                             IconButton(onClick = {
@@ -297,18 +290,22 @@ fun AddNewGamePlayScreen(
 fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavHostController) {
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val dao = BoardGameDatabase.getDatabase(LocalContext.current).boardGameDao()
+    val db = BoardGameDatabase.getDatabase(LocalContext.current)
+    val boardGameDao = db.boardGameDao()
+    val formatter = DateFormat.getDateFormat(LocalContext.current)
+
+    val gameplayDao = db.gameplayDao()
+
     var boardGameDetailsJob by remember { mutableStateOf<Job?>(null) }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    dao.get(gameId).collectAsState(null).value?.let { boardGame ->
+    boardGameDao.get(gameId).collectAsState(null).value?.let { boardGame ->
         if (boardGameDetailsJob == null && !boardGame.hasDetails) {
             boardGameDetailsJob = GlobalScope.launch {
                 queryXmlApi("https://www.boardgamegeek.com/xmlapi2/thing?id=$gameId").first().let {
-                    dao.updateBoardGameDetails(it.id, it.thumbnail!!, it.image!!, it.description!!)
+                    boardGameDao.updateBoardGameDetails(it.id, it.thumbnail!!, it.image!!, it.description!!)
                 }
-
             }
         }
 
@@ -330,7 +327,7 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
                         }) {
                             IconButton(onClick = {
                                 GlobalScope.launch {
-                                    dao.updateCollection(gameId, !isInCollection)
+                                    boardGameDao.updateCollection(gameId, !isInCollection)
 
                                     snackbarHostState.showSnackbar(
                                         message = if (isInCollection) "Removed from collection" else "Added to collection",
@@ -365,19 +362,41 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
                 if (!boardGame.hasDetails) {
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
                 } else {
-                    Column(modifier = Modifier.padding(horizontal = 16.dp).verticalScroll(rememberScrollState())) {
+                    val gameplays = gameplayDao.getAllForGame(gameId).collectAsState(emptyList()).value
+                    LazyColumn(modifier = Modifier.padding(horizontal = 16.dp)) {
 
-                        SubcomposeAsyncImage(model = boardGame.image,
-                            contentDescription = boardGame.name,
-                            modifier = Modifier.fillMaxWidth().height(250.dp).padding(vertical = 16.dp)
-                                .clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.Crop,
-                            loading = {
-                                Box(Modifier.matchParentSize().background(SkeletonAnimatedColor()))
-                            })
+                        item {
+                            SubcomposeAsyncImage(model = boardGame.image,
+                                contentDescription = boardGame.name,
+                                modifier = Modifier.fillMaxWidth().height(250.dp).padding(vertical = 16.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop,
+                                loading = {
+                                    Box(Modifier.matchParentSize().background(SkeletonAnimatedColor()))
+                                })
 
-                        ExpandableText(Html.fromHtml(boardGame.description, Html.FROM_HTML_MODE_COMPACT).toString())
+                            ExpandableText(Html.fromHtml(boardGame.description, Html.FROM_HTML_MODE_COMPACT).toString())
+
+                        }
+
+                        if (gameplays.isNotEmpty()) {
+                            item {
+                                Text("Gameplays")
+                            }
+
+
+                            items(gameplays) { gameplay ->
+                                Text(
+                                    "${formatter.format(gameplay.gameplay.date)} - ${
+                                        gameplay.playerResults.sortedByDescending { it.score }
+                                            .joinToString(", ") { it.playerName + " (" + it.score + ")" }
+                                    }"
+                                )
+                            }
+                        }
                     }
+
+
                 }
             }
         }
