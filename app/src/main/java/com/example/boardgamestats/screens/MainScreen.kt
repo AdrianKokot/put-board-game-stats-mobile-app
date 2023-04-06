@@ -27,6 +27,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -39,10 +40,7 @@ import coil.compose.SubcomposeAsyncImage
 import com.example.boardgamestats.api.queryXmlApi
 import com.example.boardgamestats.database.BoardGameDatabase
 import com.example.boardgamestats.ui.animations.SkeletonAnimatedColor
-import com.example.boardgamestats.ui.components.BoardGamesSearchBar
-import com.example.boardgamestats.ui.components.BottomNavigationBar
-import com.example.boardgamestats.ui.components.BottomNavigationGraph
-import com.example.boardgamestats.ui.components.ExpandableText
+import com.example.boardgamestats.ui.components.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -74,6 +72,8 @@ fun RootNavigationGraph(navHostController: NavHostController) {
             }
         }
     }
+
+    navHostController.navigate(GameDetailsScreenRoute.AddNewGamePlay.route.replace("{gameId}", "224517"))
 }
 
 object NavigationGraph {
@@ -162,6 +162,13 @@ fun AddNewGamePlayScreen(
     val datePickerState = rememberDatePickerState(dateInstant.toEpochMilli())
 
     val players = newGamePlayViewModel.players
+    val options = listOf("Option 1", "Option 2", "Option 3", "Option 4", "Option 5")
+
+
+    val dropDownOptions = remember { mutableStateOf(listOf<String>()) }
+    val textFieldValue = remember { mutableStateOf(TextFieldValue()) }
+    val dropDownExpanded = remember { mutableStateOf(false) }
+
 
     if (openDialog.value) {
         val confirmEnabled = remember { derivedStateOf { datePickerState.selectedDateMillis != null } }
@@ -195,14 +202,16 @@ fun AddNewGamePlayScreen(
         }, actions = {
             Button(onClick = {
 //                             TODO: save data
-                             popBackStack()
+                popBackStack()
 
-                             }, modifier = Modifier.padding(end = 16.dp)) {
+            }, modifier = Modifier.padding(end = 16.dp)) {
                 Text("Save")
             }
         })
     }, content = {
         Box(modifier = Modifier.padding(it)) {
+
+
             Column(
                 modifier = Modifier.padding(16.dp).fillMaxSize()
             ) {
@@ -249,19 +258,18 @@ fun AddNewGamePlayScreen(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            TextField(
-                                label = { Text("Score") },
+                            TextField(label = { Text("Score") },
                                 value = player.score,
                                 onValueChange = {
                                     newGamePlayViewModel.updatePlayer(
-                                        player,
-                                        newScore = (it.toIntOrNull() ?: "").toString()
+                                        player, newScore = (it.toIntOrNull() ?: "").toString()
                                     )
                                 },
                                 modifier = Modifier.width(96.dp).padding(end = 8.dp),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                             )
-                            TextField(label = { Text("Name") }, value = player.name, onValueChange = {
+
+                            TextFieldWithDropdown(label = { Text("Name") }, value = player.name, onValueChange = {
                                 newGamePlayViewModel.updatePlayer(player, newName = it)
                             }, modifier = Modifier.weight(1f).padding(end = 8.dp)
                             )
@@ -380,4 +388,3 @@ sealed class GameDetailsScreenRoute(val route: String) {
     object GameDetails : GameDetailsScreenRoute("game-details/{gameId}")
     object AddNewGamePlay : GameDetailsScreenRoute("game-details/{gameId}/add-play")
 }
-
