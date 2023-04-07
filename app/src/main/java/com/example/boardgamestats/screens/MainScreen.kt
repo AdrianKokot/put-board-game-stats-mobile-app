@@ -3,7 +3,6 @@ package com.example.boardgamestats.screens
 import android.text.Html
 import android.text.format.DateFormat
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -43,6 +42,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.util.*
 
 
 @Composable
@@ -131,11 +131,9 @@ class NewGamePlayViewModel : ViewModel() {
 fun AddNewGamePlayScreen(
     popBackStack: () -> Unit, gameId: Int, newGamePlayViewModel: NewGamePlayViewModel = viewModel()
 ) {
-    val dao = BoardGameDatabase.getDatabase(LocalContext.current)
-        .playerDao()
+    val dao = BoardGameDatabase.getDatabase(LocalContext.current).playerDao()
 
-    val gameplayDao = BoardGameDatabase.getDatabase(LocalContext.current)
-        .gameplayDao()
+    val gameplayDao = BoardGameDatabase.getDatabase(LocalContext.current).gameplayDao()
 
     val openDialog = remember { mutableStateOf(false) }
 
@@ -144,9 +142,7 @@ fun AddNewGamePlayScreen(
 
     val players = newGamePlayViewModel.players
 
-    val alreadyExistingPlayerNames = dao.getAll()
-        .collectAsState(emptyList()).value
-        .map { it.name }.toList()
+    val alreadyExistingPlayerNames = dao.getAll().collectAsState(emptyList()).value.map { it.name }.toList()
 
     if (openDialog.value) {
         val confirmEnabled = remember { derivedStateOf { datePickerState.selectedDateMillis != null } }
@@ -183,13 +179,11 @@ fun AddNewGamePlayScreen(
                 GlobalScope.launch {
                     gameplayDao.insert(
                         Gameplay(
-                            boardGameId = gameId,
-                            date = dateInstant.toEpochMilli()
+                            boardGameId = gameId, date = dateInstant.toEpochMilli()
                         ),
                         players.map {
                             PlayerWithScoreDto(
-                                playerName = it.name,
-                                score = it.score.toIntOrNull() ?: 0
+                                playerName = it.name, score = it.score.toIntOrNull() ?: 0
                             )
                         },
                     )
@@ -243,33 +237,34 @@ fun AddNewGamePlayScreen(
                     }
                 }
 
-                LazyColumn {
+                LazyColumn(modifier = Modifier.fillMaxWidth()) {
                     items(players) { player ->
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            TextField(
-                                label = { Text("Score") },
+                            TextField(label = { Text("Score") },
                                 value = player.score,
                                 onValueChange = {
                                     newGamePlayViewModel.updatePlayer(
                                         player, newScore = (it.toIntOrNull() ?: "").toString()
                                     )
                                 },
-                                modifier = Modifier.width(96.dp).padding(end = 8.dp),
+                                modifier = Modifier.width(96.dp),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                             )
 
                             TextFieldWithDropdown(label = { Text("Name") }, value = player.name, onValueChange = {
                                 newGamePlayViewModel.updatePlayer(player, newName = it)
-                            }, modifier = Modifier.weight(1f).padding(end = 8.dp),
-                                options = alreadyExistingPlayerNames
+                            }, modifier = Modifier.weight(1f), options = alreadyExistingPlayerNames
                             )
 
-                            IconButton(onClick = {
-                                newGamePlayViewModel.removePlayer(player)
-                            }) {
+                            IconButton(
+                                onClick = {
+                                    newGamePlayViewModel.removePlayer(player)
+                                }, modifier = Modifier.width(48.dp)
+                            ) {
                                 Icon(
                                     imageVector = Icons.Filled.Delete,
                                     contentDescription = null,
@@ -285,7 +280,7 @@ fun AddNewGamePlayScreen(
     })
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavHostController) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -384,14 +379,11 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
                                 Text("Gameplays")
                             }
 
-
                             items(gameplays) { gameplay ->
-                                Text(
-                                    "${formatter.format(gameplay.gameplay.date)} - ${
-                                        gameplay.playerResults.sortedByDescending { it.score }
-                                            .joinToString(", ") { it.playerName + " (" + it.score + ")" }
-                                    }"
-                                )
+                                Text("${formatter.format(gameplay.gameplay.date)} - ${
+                                    gameplay.playerResults.sortedByDescending { it.score }
+                                        .joinToString(", ") { it.playerName + " (" + it.score + ")" }
+                                }")
                             }
                         }
                     }

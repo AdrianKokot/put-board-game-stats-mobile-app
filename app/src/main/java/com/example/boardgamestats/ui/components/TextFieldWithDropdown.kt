@@ -1,5 +1,6 @@
 package com.example.boardgamestats.ui.components
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -13,7 +14,7 @@ import androidx.compose.ui.Modifier
 @Composable
 fun TextFieldWithDropdown(
     modifier: Modifier = Modifier,
-    options: List<String> = listOf("Option 1", "Option 2", "Option 3", "Option 4", "Option 5"),
+    options: List<String>,
     value: String = "",
     label: @Composable() (() -> Unit)?,
     onValueChange: ((String) -> Unit)?,
@@ -22,13 +23,14 @@ fun TextFieldWithDropdown(
     var selectedOptionText by rememberSaveable { mutableStateOf(value) }
 
     ExposedDropdownMenuBox(
+        modifier = modifier,
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
     ) {
         val filteringOptions = options.filter { it.contains(selectedOptionText, ignoreCase = true) }
 
         TextField(
-            modifier = modifier.menuAnchor(),
+            modifier = Modifier.fillMaxWidth().menuAnchor(),
             value = selectedOptionText,
             onValueChange = {
                 selectedOptionText = it
