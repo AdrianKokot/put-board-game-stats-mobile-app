@@ -6,11 +6,17 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BoardGameDao {
-    @Query("SELECT * FROM boardgame")
-    fun getAll(): Flow<List<BoardGame>>
+    @Query("SELECT * FROM boardgame WHERE isExpansion = FALSE")
+    fun getAllBoardGames(): Flow<List<BoardGame>>
 
-    @Query("SELECT * FROM boardgame WHERE inCollection = TRUE")
-    fun getCollection(): Flow<List<BoardGame>>
+    @Query("SELECT * FROM boardgame WHERE isExpansion = TRUE")
+    fun getAllExpansions(): Flow<List<BoardGame>>
+
+    @Query("SELECT * FROM boardgame WHERE inCollection = TRUE and isExpansion = FALSE")
+    fun getBoardGamesCollection(): Flow<List<BoardGame>>
+
+    @Query("SELECT * FROM boardgame WHERE inCollection = TRUE and isExpansion = TRUE")
+    fun getExpansionsCollection(): Flow<List<BoardGame>>
 
     @Query("SELECT * FROM boardgame WHERE id = :id LIMIT 1")
     fun get(id: Int): Flow<BoardGame>
@@ -24,6 +30,6 @@ interface BoardGameDao {
     @Query("UPDATE boardgame SET inCollection = :inCollection WHERE id = :id")
     fun updateCollection(id: Int, inCollection: Boolean)
 
-    @Query("UPDATE boardgame SET thumbnail = :thumbnail, image = :image, description = :description, hasDetails = true WHERE id = :id")
-    fun updateBoardGameDetails(id: Int, thumbnail: String, image: String, description: String)
+    @Query("UPDATE boardgame SET thumbnail = :thumbnail, image = :image, description = :description, hasDetails = true, isExpansion = :isExpansion WHERE id = :id")
+    fun updateDetails(id: Int, thumbnail: String, image: String, description: String, isExpansion: Boolean)
 }

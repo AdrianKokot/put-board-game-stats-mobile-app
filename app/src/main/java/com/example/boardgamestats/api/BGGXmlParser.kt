@@ -23,6 +23,7 @@ fun parseXml(inputStream: InputStream): List<BoardGame> {
     var currentThumbnail: String? = null
     var currentImage: String? = null
     var currentDescription: String? = null
+    var currentType: String? = null
 
     while (eventType != XmlPullParser.END_DOCUMENT) {
         when (eventType) {
@@ -31,6 +32,7 @@ fun parseXml(inputStream: InputStream): List<BoardGame> {
                     "item" -> {
                         if (currentId == null) {
                             currentId = parser.getAttributeValue(null, "id").toInt()
+                            currentType = parser.getAttributeValue(null, "type")
                         }
                     }
 
@@ -48,21 +50,18 @@ fun parseXml(inputStream: InputStream): List<BoardGame> {
 
                     "thumbnail" -> {
                         if (currentThumbnail == null) {
-//                            d("currentThumbnail", parser.nextText())
                             currentThumbnail = parser.nextText()
                         }
                     }
 
                     "image" -> {
                         if (currentImage == null) {
-//                            d("currentImage", parser.nextText())
                             currentImage = parser.nextText()
                         }
                     }
 
                     "description" -> {
                         if (currentDescription == null) {
-//                            d("currentDescription", parser.nextText())
                             currentDescription = parser.nextText()
                         }
                     }
@@ -80,7 +79,8 @@ fun parseXml(inputStream: InputStream): List<BoardGame> {
                                 currentThumbnail,
                                 currentDescription,
                                 false,
-                                currentImage
+                                currentImage,
+                                isExpansion = currentType == "boardgameexpansion"
                             )
                         )
                     }

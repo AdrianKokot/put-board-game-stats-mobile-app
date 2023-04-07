@@ -1,12 +1,10 @@
 package com.example.boardgamestats.database.daos
 
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Transaction
+import androidx.room.*
 import com.example.boardgamestats.models.*
 import kotlinx.coroutines.flow.Flow
 
+@Dao
 interface GameplayDao {
     @Query("SELECT * FROM gameplay WHERE boardGameId = :boardGameId")
     fun getAllForGame(boardGameId: Int): Flow<List<GameplayWithPlayers>>

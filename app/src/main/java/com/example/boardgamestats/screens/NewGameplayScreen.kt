@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.boardgamestats.database.BoardGameDatabase
-import com.example.boardgamestats.database.Gameplay
-import com.example.boardgamestats.database.PlayerWithScoreDto
+import com.example.boardgamestats.models.Gameplay
+import com.example.boardgamestats.models.PlayerWithScoreDto
 import com.example.boardgamestats.ui.components.TextFieldWithDropdown
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -166,7 +166,8 @@ fun NewGameplayScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            TextField(label = { Text("Score") },
+                            TextField(
+                                label = { Text("Score") },
                                 value = player.score,
                                 onValueChange = {
                                     newGamePlayViewModel.updatePlayer(
@@ -195,8 +196,6 @@ fun NewGameplayScreen(
                         }
                     }
                 }
-
-
             }
         }
     })

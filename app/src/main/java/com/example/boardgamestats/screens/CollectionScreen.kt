@@ -15,11 +15,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import com.example.boardgamestats.database.BoardGameDatabase
 import com.example.boardgamestats.models.BoardGame
-import com.example.boardgamestats.models.BoardGameThingItem
 import com.example.boardgamestats.ui.animations.SkeletonAnimatedColor
 import com.example.boardgamestats.ui.extensions.customTabIndicatorOffset
 
@@ -70,7 +68,7 @@ fun CollectionScreen(navigateToDetails: (Int) -> Unit) {
 fun GamesCollection(navigateToDetails: (Int) -> Unit) {
     BoardGameDatabase.getDatabase(LocalContext.current)
         .boardGameDao()
-        .getCollection()
+        .getBoardGamesCollection()
         .collectAsState(initial = emptyList())
         .let { state ->
             CollectionList(state.value) { navigateToDetails(it.id) }
@@ -78,7 +76,7 @@ fun GamesCollection(navigateToDetails: (Int) -> Unit) {
 }
 
 @Composable
-fun CollectionList(list: List<BoardGameThingItem>, onItemClick: (item: BoardGameThingItem) -> Unit) {
+fun CollectionList(list: List<BoardGame>, onItemClick: (item: BoardGame) -> Unit) {
     LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
         itemsIndexed(list) { _, item ->
             ListItem(
@@ -105,8 +103,8 @@ fun CollectionList(list: List<BoardGameThingItem>, onItemClick: (item: BoardGame
 @Composable
 fun ExpansionsCollection() {
     BoardGameDatabase.getDatabase(LocalContext.current)
-        .boardGameExpansionDao()
-        .getCollection()
+        .boardGameDao()
+        .getExpansionsCollection()
         .collectAsState(initial = emptyList())
         .let { state ->
             CollectionList(state.value) {  }

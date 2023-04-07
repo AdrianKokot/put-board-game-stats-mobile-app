@@ -53,7 +53,7 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
         if (boardGameDetailsJob == null && !boardGame.hasDetails) {
             boardGameDetailsJob = GlobalScope.launch {
                 queryXmlApi("https://www.boardgamegeek.com/xmlapi2/thing?id=$gameId").first().let {
-                    boardGameDao.updateBoardGameDetails(it.id, it.thumbnail!!, it.image!!, it.description!!)
+                    boardGameDao.updateDetails(it.id, it.thumbnail!!, it.image!!, it.description!!, it.isExpansion)
                 }
             }
         }
@@ -78,6 +78,7 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
                                 GlobalScope.launch {
                                     boardGameDao.updateCollection(gameId, !isInCollection)
 
+                                    snackbarHostState.currentSnackbarData?.dismiss()
                                     snackbarHostState.showSnackbar(
                                         message = if (isInCollection) "Removed from collection" else "Added to collection",
                                         duration = SnackbarDuration.Short,
@@ -137,8 +138,6 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
                             }
                         }
                     }
-
-
                 }
             }
         }
