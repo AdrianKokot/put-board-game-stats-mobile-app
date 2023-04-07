@@ -9,7 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.rememberNavController
-import com.example.boardgamestats.screens.RootNavigationGraph
+import com.example.boardgamestats.navigation.RootNavigationGraph
 import com.example.boardgamestats.ui.theme.BoardGameStatsTheme
 
 class MainActivity : ComponentActivity() {
