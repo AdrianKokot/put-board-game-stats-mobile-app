@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface GameplayDao {
-    @Query("SELECT * FROM gameplay WHERE boardGameId = :boardGameId")
+    @Query("SELECT * FROM gameplay WHERE boardGameId = :boardGameId ORDER BY date DESC")
     fun getAllForGame(boardGameId: Int): Flow<List<GameplayWithPlayers>>
 
     @Transaction

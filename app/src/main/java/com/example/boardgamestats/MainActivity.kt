@@ -9,6 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.rememberNavController
+import com.example.boardgamestats.navigation.GameNavigation
 import com.example.boardgamestats.navigation.RootNavigationGraph
 import com.example.boardgamestats.ui.theme.BoardGameStatsTheme
 
@@ -21,6 +22,8 @@ class MainActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     val navController = rememberNavController()
                     RootNavigationGraph(navController)
+
+                    navController.navigate(GameNavigation.DetailsScreen(224517))
                 }
             }
         }

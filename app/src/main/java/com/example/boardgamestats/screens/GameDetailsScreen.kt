@@ -3,14 +3,16 @@ package com.example.boardgamestats.screens
 import android.text.Html
 import android.text.format.DateFormat
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.BookmarkAdded
 import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material3.*
@@ -21,20 +23,48 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.SubcomposeAsyncImage
 import com.example.boardgamestats.api.queryXmlApi
 import com.example.boardgamestats.database.BoardGameDatabase
+import com.example.boardgamestats.models.GameplayWithPlayers
 import com.example.boardgamestats.navigation.GameNavigation
 import com.example.boardgamestats.ui.animations.SkeletonAnimatedColor
 import com.example.boardgamestats.ui.components.ExpandableText
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.Period
+import java.time.ZoneId
 
-@OptIn(ExperimentalMaterial3Api::class)
+fun formatTimeAgo(epochMillis: Long): String {
+    val now = Instant.now().atZone(ZoneId.systemDefault()).toLocalDate()
+    val localDate = Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()).toLocalDate()
+
+    val period = Period.between(localDate, now)
+
+    if (period.days <= 0) {
+        return "Today"
+    }
+
+    if (period.days == 1) {
+        return "Yesterday"
+    }
+
+    if (period.days < 6) {
+        return "${period.days} days ago"
+    }
+
+    return DateFormat.getDateFormat(null).format(epochMillis)
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavHostController) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -104,41 +134,166 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
                     Icon(Icons.Filled.Add, contentDescription = null)
                 }
             }) { padding ->
-            Box(Modifier.padding(padding).fillMaxSize()) {
+            Box(Modifier.padding(padding).fillMaxWidth()) {
                 if (!boardGame.hasDetails) {
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
                 } else {
-                    val gameplays = gameplayDao.getAllForGame(gameId).collectAsState(emptyList()).value
-                    LazyColumn(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    val scrollState = rememberLazyListState()
+                    val plays = gameplayDao.getAllForGame(gameId).collectAsState(emptyList()).value
+                    LazyColumn(state = scrollState) {
 
                         item {
-                            SubcomposeAsyncImage(model = boardGame.image,
-                                contentDescription = boardGame.name,
-                                modifier = Modifier.fillMaxWidth().height(250.dp).padding(vertical = 16.dp)
-                                    .clip(RoundedCornerShape(8.dp)),
-                                contentScale = ContentScale.Crop,
-                                loading = {
-                                    Box(Modifier.matchParentSize().background(SkeletonAnimatedColor()))
-                                })
+                            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                SubcomposeAsyncImage(model = boardGame.image,
+                                    contentDescription = boardGame.name,
+                                    modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 16.dp )
+                                        .clip(RoundedCornerShape(8.dp)),
+                                    contentScale = ContentScale.Crop,
+                                    loading = {
+                                        Box(Modifier.matchParentSize().background(SkeletonAnimatedColor()))
+                                    })
 
-                            ExpandableText(Html.fromHtml(boardGame.description, Html.FROM_HTML_MODE_COMPACT).toString())
+                                ExpandableText(
+                                    text = Html.fromHtml(boardGame.description, Html.FROM_HTML_MODE_COMPACT).toString(),
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                )
 
+                            }
+
+                            Spacer(modifier = Modifier.height(32.dp))
                         }
 
-                        if (gameplays.isNotEmpty()) {
+                        if (plays.isNotEmpty()) {
                             item {
-                                Text("Gameplays")
+                                SectionTitle(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    title = "Statistics",
+                                    onArrowClick = {
+
+                                    })
+                                GameplayStatisticsOverview(plays = plays)
                             }
 
-                            items(gameplays) { gameplay ->
-                                Text("${formatter.format(gameplay.gameplay.date)} - ${
-                                    gameplay.playerResults.sortedByDescending { it.score }
-                                        .joinToString(", ") { it.playerName + " (" + it.score + ")" }
-                                }")
+                            stickyHeader {
+                                SectionTitle(
+                                    modifier = Modifier.padding(
+                                        start = 16.dp,
+                                        end = 16.dp,
+                                        bottom = 8.dp,
+                                        top = 64.dp
+                                    ), title = "Recent plays", onArrowClick = {
+
+                                    })
+                            }
+
+                            items(plays.take(2)) { gameplay ->
+                                ListItem(
+                                    headlineContent = { Text(formatter.format(gameplay.gameplay.date)) },
+                                    supportingContent = {
+                                        Text(
+                                            gameplay.playerResults.sortedByDescending { it.score }
+                                                .joinToString(", ") { it.playerName + " (" + it.score + ")" }
+                                        )
+                                    },
+                                    modifier = Modifier.clickable {
+//                                            TODO
+                                    }
+                                )
                             }
                         }
+
+
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun GameplayStatisticsOverview(
+    plays: List<GameplayWithPlayers>,
+    gridTitleTextStyle: TextStyle = MaterialTheme.typography.titleMedium,
+    gridLabelTextStyle: TextStyle = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
+) {
+    if (plays.isEmpty()) {
+        return
+    }
+
+    val statistics by remember {
+        derivedStateOf {
+            listOf(
+                listOf(
+                    "Highest score" to plays.flatMap { it.playerResults }.maxByOrNull { it.score }?.score.toString(),
+                    "Avg score" to plays.flatMap { it.playerResults }.map { it.score }.average().toInt().toString(),
+                    "Lowest score" to plays.flatMap { it.playerResults }.minByOrNull { it.score }?.score.toString()
+                ),
+                listOf(
+                    "Last played" to formatTimeAgo(plays.maxByOrNull { it.gameplay.date }!!.gameplay.date),
+                    "Avg playtime" to plays.mapNotNull { it.gameplay.playtime }.average()
+                        .let { if (it.isNaN()) "No data" else it.toInt().toString() },
+                    "Total plays" to plays.size.toString()
+                )
+            )
+        }
+    }
+
+    statistics.forEach { list ->
+        Row(
+            modifier = Modifier.fillMaxWidth()
+                .padding(top = gridTitleTextStyle.lineHeight.value.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            list.forEach { pair ->
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        pair.second,
+                        style = gridTitleTextStyle
+                    )
+                    Text(
+                        pair.first,
+                        style = gridLabelTextStyle
+                            .copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SectionTitle(
+    modifier: Modifier = Modifier,
+    textStyle: TextStyle = MaterialTheme.typography.titleLarge,
+    title: String,
+    onArrowClick: (() -> Unit)? = null
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Text(
+            title,
+            style = textStyle
+        )
+
+        if (onArrowClick != null) {
+            IconButton(
+                onClick = onArrowClick,
+                modifier = Modifier.size(textStyle.lineHeight.value.dp)
+            ) {
+                Icon(
+                    Icons.Default.ArrowForward,
+                    contentDescription = null,
+                    modifier = Modifier.size(textStyle.fontSize.value.dp)
+                )
             }
         }
     }

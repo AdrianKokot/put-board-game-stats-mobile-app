@@ -8,7 +8,8 @@ data class Gameplay(
     val id: Int = 0,
     val boardGameId: Int,
     val date: Long,
-    val notes: String = ""
+    val notes: String = "",
+    val playtime: Long? = null
 )
 
 @Entity(
