@@ -1,6 +1,8 @@
 package com.example.boardgamestats.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,6 +20,8 @@ fun TextFieldWithDropdown(
     value: String = "",
     label: @Composable() (() -> Unit)?,
     onValueChange: ((String) -> Unit)?,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     var selectedOptionText by rememberSaveable { mutableStateOf(value) }
@@ -30,6 +34,7 @@ fun TextFieldWithDropdown(
         val filteringOptions = options.filter { it.contains(selectedOptionText, ignoreCase = true) }
 
         TextField(
+            maxLines = 1,
             modifier = Modifier.fillMaxWidth().menuAnchor(),
             value = selectedOptionText,
             onValueChange = {
@@ -38,6 +43,8 @@ fun TextFieldWithDropdown(
             },
             label = label,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded && filteringOptions.isNotEmpty()) },
+            keyboardActions = keyboardActions,
+            keyboardOptions = keyboardOptions,
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
         )
 

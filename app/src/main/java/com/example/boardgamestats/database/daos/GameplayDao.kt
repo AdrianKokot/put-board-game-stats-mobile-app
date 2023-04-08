@@ -23,7 +23,7 @@ interface GameplayDao {
 
     @Transaction
     @Insert
-    fun insert(gameplay: Gameplay, playersDto: List<PlayerWithScoreDto>) {
+    suspend fun insert(gameplay: Gameplay, playersDto: List<PlayerWithScoreDto>) {
         val insertedGameplayId = insertGameplay(gameplay).toInt()
 
         insertPlayers(*playersDto.map { Player(name = it.playerName) }.toTypedArray())
@@ -37,14 +37,14 @@ interface GameplayDao {
     }
 
     @Insert
-    fun insertPlayerWithScore(vararg player: PlayerWithScore)
+    suspend fun insertPlayerWithScore(vararg player: PlayerWithScore)
 
     @Insert
     @Transaction
-    fun insertGameplay(gameplay: Gameplay): Long
+    suspend fun insertGameplay(gameplay: Gameplay): Long
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertPlayers(vararg players: Player)
+    suspend fun insertPlayers(vararg players: Player)
 
 
 }

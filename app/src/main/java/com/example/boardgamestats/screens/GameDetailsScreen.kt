@@ -3,7 +3,9 @@ package com.example.boardgamestats.screens
 import android.text.Html
 import android.text.format.DateFormat
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -35,34 +37,11 @@ import com.example.boardgamestats.models.GameplayWithPlayers
 import com.example.boardgamestats.navigation.GameNavigation
 import com.example.boardgamestats.ui.animations.SkeletonAnimatedColor
 import com.example.boardgamestats.ui.components.ExpandableText
+import com.example.boardgamestats.utils.toDaysAgo
+import com.example.boardgamestats.utils.toTimeString
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.Period
-import java.time.ZoneId
-
-fun formatTimeAgo(epochMillis: Long): String {
-    val now = Instant.now().atZone(ZoneId.systemDefault()).toLocalDate()
-    val localDate = Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()).toLocalDate()
-
-    val period = Period.between(localDate, now)
-
-    if (period.days <= 0) {
-        return "Today"
-    }
-
-    if (period.days == 1) {
-        return "Yesterday"
-    }
-
-    if (period.days < 6) {
-        return "${period.days} days ago"
-    }
-
-    return DateFormat.getDateFormat(null).format(epochMillis)
-}
-
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -146,7 +125,7 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
                             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                                 SubcomposeAsyncImage(model = boardGame.image,
                                     contentDescription = boardGame.name,
-                                    modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 16.dp )
+                                    modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 16.dp)
                                         .clip(RoundedCornerShape(8.dp)),
                                     contentScale = ContentScale.Crop,
                                     loading = {
@@ -231,9 +210,11 @@ fun GameplayStatisticsOverview(
                     "Lowest score" to plays.flatMap { it.playerResults }.minByOrNull { it.score }?.score.toString()
                 ),
                 listOf(
-                    "Last played" to formatTimeAgo(plays.maxByOrNull { it.gameplay.date }!!.gameplay.date),
-                    "Avg playtime" to plays.mapNotNull { it.gameplay.playtime }.average()
-                        .let { if (it.isNaN()) "No data" else it.toInt().toString() },
+                    "Last played" to plays.maxByOrNull { it.gameplay.date }!!.gameplay.date.toDaysAgo(),
+                    "Avg playtime" to plays.mapNotNull { it.gameplay.playtime }
+                        .filter { it > 0 }
+                        .average()
+                        .let { if (it.isNaN()) "No data" else it.toLong().toTimeString() },
                     "Total plays" to plays.size.toString()
                 )
             )
