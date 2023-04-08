@@ -108,7 +108,7 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
             },
             floatingActionButton = {
                 FloatingActionButton(onClick = {
-                    navController.navigate(GameNavigation.NewGameplayScreen(gameId))
+                    navController.navigate(GameNavigation.newGameplayScreen(gameId))
                 }) {
                     Icon(Icons.Filled.Add, contentDescription = null)
                 }
@@ -163,7 +163,7 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
                                         bottom = 8.dp,
                                         top = 64.dp
                                     ), title = "Recent plays", onArrowClick = {
-
+                                        navController.navigate(GameNavigation.gameplayListScreen(gameId))
                                     })
                             }
 
@@ -177,13 +177,15 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
                                         )
                                     },
                                     modifier = Modifier.clickable {
-//                                            TODO
+                                        navController.navigate(GameNavigation.gameplayDetailsScreen(gameplay.gameplay.id))
                                     }
                                 )
                             }
+
+                            item {
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
-
-
                     }
                 }
             }

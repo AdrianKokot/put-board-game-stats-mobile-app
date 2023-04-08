@@ -3,15 +3,21 @@ package com.example.boardgamestats.navigation
 import androidx.navigation.*
 import androidx.navigation.compose.composable
 import com.example.boardgamestats.screens.GameDetailsScreen
+import com.example.boardgamestats.screens.GameplayDetailsScreen
+import com.example.boardgamestats.screens.GameplayListScreen
 import com.example.boardgamestats.screens.NewGameplayScreen
 
 object GameNavigation {
     const val RootRoute = "GameNavigation_RootRoute"
     const val DetailsScreen = "Game_Navigation_DetailsScreen/{gameId}"
     const val NewGameplayScreen = "Game_Navigation_NewGameplayScreen/{gameId}"
+    const val GameplayDetailsScreen = "Game_Navigation_GameplayDetailsScreen/{gameplayId}"
+    const val GameplayListScreen = "Game_Navigation_GameplayListScreen/{gameId}"
 
-    fun DetailsScreen(gameId: Int) = DetailsScreen.replace("{gameId}", gameId.toString())
-    fun NewGameplayScreen(gameId: Int) = NewGameplayScreen.replace("{gameId}", gameId.toString())
+    fun detailsScreen(gameId: Int) = DetailsScreen.replace("{gameId}", gameId.toString())
+    fun newGameplayScreen(gameId: Int) = NewGameplayScreen.replace("{gameId}", gameId.toString())
+    fun gameplayDetailsScreen(gameplayId: Int) = GameplayDetailsScreen.replace("{gameplayId}", gameplayId.toString())
+    fun gameplayListScreen(gameId: Int) = GameplayListScreen.replace("{gameId}", gameId.toString())
 }
 
 fun NavGraphBuilder.GameNavigationGraph(navController: NavHostController) {
@@ -20,10 +26,10 @@ fun NavGraphBuilder.GameNavigationGraph(navController: NavHostController) {
             GameNavigation.DetailsScreen,
             arguments = listOf(navArgument("gameId") { type = NavType.IntType })
         ) {
-            it.arguments?.getInt("gameId")?.let { it1 ->
+            it.arguments?.getInt("gameId")?.let { gameId ->
                 GameDetailsScreen(popBackStack = {
                     navController.popBackStack()
-                }, it1, navController)
+                }, gameId, navController)
             }
         }
 
@@ -31,10 +37,28 @@ fun NavGraphBuilder.GameNavigationGraph(navController: NavHostController) {
             GameNavigation.NewGameplayScreen,
             arguments = listOf(navArgument("gameId") { type = NavType.IntType })
         ) {
-            it.arguments?.getInt("gameId")?.let { it1 ->
+            it.arguments?.getInt("gameId")?.let { gameId ->
                 NewGameplayScreen(popBackStack = {
                     navController.popBackStack()
-                }, it1)
+                }, gameId)
+            }
+        }
+
+        composable(
+            GameNavigation.GameplayDetailsScreen,
+            arguments = listOf(navArgument("gameplayId") { type = NavType.IntType })
+        ) {
+            it.arguments?.getInt("gameplayId")?.let { gameplayId ->
+                GameplayDetailsScreen(gameplayId, navController)
+            }
+        }
+
+        composable(
+            GameNavigation.GameplayListScreen,
+            arguments = listOf(navArgument("gameId") { type = NavType.IntType })
+        ) {
+            it.arguments?.getInt("gameId")?.let { gameplayId ->
+                GameplayListScreen(gameplayId, navController)
             }
         }
     }

@@ -19,7 +19,7 @@ fun NavGraphBuilder.MainNavigationGraph(navController: NavHostController) {
             MainNavigation.MainScreen
         ) {
             MainScreen {
-                navController.navigate(GameNavigation.DetailsScreen(it))
+                navController.navigate(GameNavigation.detailsScreen(it))
             }
         }
     }

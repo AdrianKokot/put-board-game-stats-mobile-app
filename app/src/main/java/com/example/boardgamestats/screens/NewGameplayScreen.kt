@@ -112,7 +112,6 @@ fun NewGameplayScreen(
         }
     }
 
-
     if (showTimePicker) {
         TimePickerDialog(
             onDismissRequest = {
@@ -139,7 +138,6 @@ fun NewGameplayScreen(
             TimePicker(state = timePickerState)
         }
     }
-
 
     Scaffold(
         topBar = {
@@ -172,11 +170,11 @@ fun NewGameplayScreen(
         },
         content = {
             LazyColumn(
-                modifier = Modifier.padding(it).padding(horizontal = 16.dp)
+                modifier = Modifier.padding(it)
             ) {
                 item {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp, horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -218,13 +216,12 @@ fun NewGameplayScreen(
                             }
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(32.dp))
                 }
 
                 stickyHeader {
                     Row(
-                        modifier = Modifier.background(MaterialTheme.colorScheme.surface).fillMaxWidth(),
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface).fillMaxWidth()
+                            .padding(horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -245,7 +242,7 @@ fun NewGameplayScreen(
 
                 itemsIndexed(players) { index, player ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {

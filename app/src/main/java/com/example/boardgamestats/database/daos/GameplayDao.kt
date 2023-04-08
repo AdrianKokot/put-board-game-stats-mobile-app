@@ -11,7 +11,12 @@ interface GameplayDao {
 
     @Transaction
     @Query("SELECT * FROM Gameplay WHERE id = :gameplayId")
-    fun getGameplayWithPlayers(gameplayId: Int): GameplayWithPlayers
+    fun getGameplayWithPlayers(gameplayId: Int): Flow<GameplayWithPlayers>
+
+    @Transaction
+    @Query("SELECT * FROM Gameplay WHERE id = :gameplayId")
+    fun getGameplay(gameplayId: Int): Gameplay
+
 
     @Transaction
     @Insert
@@ -20,6 +25,17 @@ interface GameplayDao {
     @Query("SELECT * FROM player WHERE name = :name LIMIT 1")
     fun getPlayerByName(name: String): Player?
 
+
+
+    @Transaction
+    @Delete
+    suspend fun delete(gameplay: Gameplay)
+
+    @Transaction
+    @Delete
+    suspend fun delete(gameplay: Int) {
+        this.getGameplay(gameplay).let { this.delete(it) }
+    }
 
     @Transaction
     @Insert

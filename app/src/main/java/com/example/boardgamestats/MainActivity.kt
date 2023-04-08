@@ -1,7 +1,6 @@
 package com.example.boardgamestats
 
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +23,7 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     RootNavigationGraph(navController)
 
-                    navController.navigate(GameNavigation.DetailsScreen(224517))
+                    navController.navigate(GameNavigation.detailsScreen(224517))
                 }
             }
         }

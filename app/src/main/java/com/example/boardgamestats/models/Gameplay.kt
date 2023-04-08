@@ -14,18 +14,20 @@ data class Gameplay(
 
 @Entity(
     primaryKeys = ["gameplayId", "playerName"],
-    foreignKeys = [ForeignKey(
-        entity = Gameplay::class,
-        parentColumns = ["id"],
-        childColumns = ["gameplayId"],
-        onDelete = ForeignKey.CASCADE
-    ),
+    foreignKeys = [
+        ForeignKey(
+            entity = Gameplay::class,
+            parentColumns = ["id"],
+            childColumns = ["gameplayId"],
+            onDelete = ForeignKey.CASCADE
+        ),
         ForeignKey(
             entity = Player::class,
             parentColumns = ["name"],
             childColumns = ["playerName"],
             onDelete = ForeignKey.CASCADE
-        )]
+        )
+    ]
 )
 data class PlayerWithScore(
     val gameplayId: Int,
