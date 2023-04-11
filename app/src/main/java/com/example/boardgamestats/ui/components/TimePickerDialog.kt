@@ -1,11 +1,15 @@
 package com.example.boardgamestats.ui.components
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -22,6 +26,8 @@ fun TimePickerDialog(
     properties: DialogProperties = DialogProperties(usePlatformDefaultWidth = false),
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val isPortrait = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
+
     AlertDialog(
         onDismissRequest = onDismissRequest,
         modifier = modifier.wrapContentHeight(),
@@ -29,7 +35,7 @@ fun TimePickerDialog(
     ) {
         Surface(
             modifier = Modifier
-                .requiredWidth(328.dp),
+                .requiredWidth(if (isPortrait) 328.dp else 572.dp).verticalScroll(rememberScrollState()),
             shape = shape,
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = tonalElevation,
