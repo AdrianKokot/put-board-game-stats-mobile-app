@@ -48,3 +48,17 @@ data class GameplayWithPlayers(
     )
     val playerResults: List<PlayerWithScore>
 )
+
+data class GameplayDetails(
+    @Embedded val gameplay: Gameplay,
+    @Relation(
+        parentColumn = "boardGameId",
+        entityColumn = "id"
+    )
+    val boardGame: BoardGame,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "gameplayId"
+    )
+    val playerResults: List<PlayerWithScore>
+)

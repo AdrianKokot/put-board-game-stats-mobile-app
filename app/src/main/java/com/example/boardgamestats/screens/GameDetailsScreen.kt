@@ -153,15 +153,14 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
 
                                     })
                                 GameplayStatisticsOverview(plays = plays)
+                                Spacer(modifier = Modifier.height(56.dp))
                             }
 
                             stickyHeader {
                                 SectionTitle(
                                     modifier = Modifier.padding(
-                                        start = 16.dp,
-                                        end = 16.dp,
-                                        bottom = 8.dp,
-                                        top = 64.dp
+                                        horizontal = 16.dp,
+                                        vertical = 8.dp
                                     ), title = "Recent plays", onArrowClick = {
                                         navController.navigate(GameNavigation.gameplayListScreen(gameId))
                                     })

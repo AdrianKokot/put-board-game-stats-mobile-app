@@ -1,36 +1,54 @@
 package com.example.boardgamestats.screens
 
+import android.text.format.DateFormat
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.boardgamestats.database.BoardGameDatabase
 import com.example.boardgamestats.utils.toTimeString
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun GameplayDetailsScreen(gameplayId: Int, navController: NavController) {
-    val gameplayDao = BoardGameDatabase
-        .getDatabase(LocalContext.current)
-        .gameplayDao()
+    val database = BoardGameDatabase.getDatabase(LocalContext.current)
+    val gameplayDao = database.gameplayDao()
 
-    val gameplay by gameplayDao.getGameplayWithPlayers(gameplayId)
-        .collectAsState(null)
+    val lazyListState = rememberLazyListState()
+    val isScrollable by remember { derivedStateOf { lazyListState.canScrollBackward || lazyListState.canScrollForward } }
+
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(canScroll = { isScrollable })
+
+    val gameplay = gameplayDao.getGameplayDetails(gameplayId).collectAsState(null).value
+
+    val formatter = DateFormat.getDateFormat(LocalContext.current)
 
     var expanded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
+            MediumTopAppBar(scrollBehavior = scrollBehavior,
                 title = {
                     Text(
                         "Gameplay details", maxLines = 1, overflow = TextOverflow.Ellipsis
@@ -70,20 +88,67 @@ fun GameplayDetailsScreen(gameplayId: Int, navController: NavController) {
             if (gameplay == null) {
                 CircularProgressIndicator(Modifier.align(Alignment.Center))
             } else {
+                val details = listOfNotNull(
+                    Icons.Outlined.Casino to gameplay.boardGame.name,
+                    if (gameplay.gameplay.playtime != null) Icons.Outlined.Timer to gameplay.gameplay.playtime.toTimeString() else null,
+                    Icons.Outlined.Today to formatter.format(gameplay.gameplay.date),
+                    if (gameplay.gameplay.notes.isNotEmpty()) Icons.Outlined.Description to gameplay.gameplay.notes else null
+                )
 
-                Column {
-                    Text("Playtime: ${gameplay?.gameplay?.playtime?.toTimeString()}")
-//                Text("Date: ${gameplay.date}")
-//                Text("Location: ${gameplay.location}")
-//                Text("Duration: ${gameplay.duration}")
-//                Text("Notes: ${gameplay.notes}")
-//                Text("Players:")
-//                gameplay.players.forEach { player ->
-//                    Text("  ${player.name}")
-//                }
+                LazyColumn(state = lazyListState) {
+                    item {
+                        Card(modifier = Modifier.padding(horizontal = 16.dp)) {
+                            details.forEach { (icon, text) ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth()
+                                        .padding(end = 8.dp),
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Icon(
+                                        icon,
+                                        contentDescription = null,
+                                        modifier = Modifier.padding(16.dp),
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
+
+                                    Text(
+                                        text,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f)
+                                            .padding(top = 16.dp, bottom = 16.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+
+                    stickyHeader {
+                        Crossfade(lazyListState.firstVisibleItemIndex == 0, animationSpec = spring()) {
+                            val backgroundColor =
+                                if (it) MaterialTheme.colorScheme.surface
+                                else MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+
+                            SectionTitle(
+                                title = "Players",
+                                modifier = Modifier.background(backgroundColor)
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
+
+                    items(gameplay.playerResults.sortedByDescending { it.score }) { player ->
+                        ListItem(
+                            headlineContent = { Text(player.playerName) },
+                            trailingContent = { Text(player.score.toString()) },
+                            leadingContent = {
+                                Icon(Icons.Outlined.Person, contentDescription = null)
+                            }
+                        )
+                    }
                 }
             }
-
         }
     }
 }

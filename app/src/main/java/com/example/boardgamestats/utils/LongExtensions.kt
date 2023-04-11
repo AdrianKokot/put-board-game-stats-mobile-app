@@ -6,11 +6,9 @@ import java.time.Period
 import java.time.ZoneId
 
 fun Long.toDaysAgo(): String {
-
     val now = Instant.now().atZone(ZoneId.systemDefault()).toLocalDate()
     val localDate = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
     val days = Period.between(localDate, now).days
-
     return when {
         days <= 0 -> "Today"
         days == 1 -> "Yesterday"

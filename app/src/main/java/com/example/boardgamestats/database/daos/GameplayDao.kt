@@ -15,6 +15,10 @@ interface GameplayDao {
 
     @Transaction
     @Query("SELECT * FROM Gameplay WHERE id = :gameplayId")
+    fun getGameplayDetails(gameplayId: Int): Flow<GameplayDetails>
+
+    @Transaction
+    @Query("SELECT * FROM Gameplay WHERE id = :gameplayId")
     fun getGameplay(gameplayId: Int): Gameplay
 
 

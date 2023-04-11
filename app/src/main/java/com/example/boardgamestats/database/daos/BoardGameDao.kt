@@ -21,6 +21,9 @@ interface BoardGameDao {
     @Query("SELECT * FROM boardgame WHERE id = :id LIMIT 1")
     fun get(id: Int): Flow<BoardGame>
 
+    @Query("SELECT * FROM boardgame WHERE id = (SELECT boardGameId FROM Gameplay WHERE id = :gameplayId) LIMIT 1")
+    fun getByGameplay(gameplayId: Int): Flow<BoardGame>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertAll(vararg boardGames: BoardGame)
 
