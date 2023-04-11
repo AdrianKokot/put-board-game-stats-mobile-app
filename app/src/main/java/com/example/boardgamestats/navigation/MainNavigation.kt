@@ -18,24 +18,26 @@ fun NavGraphBuilder.MainNavigationGraph(navController: NavHostController) {
         composable(
             MainNavigation.MainScreen
         ) {
-            MainScreen {
-                navController.navigate(GameNavigation.detailsScreen(it))
-            }
+            MainScreen(navController)
         }
     }
 }
 
 @Composable
-fun BottomNavigationGraph(navController: NavHostController, navigateToDetails: (Int) -> Unit) {
+fun BottomNavigationGraph(bottomNavigationController: NavHostController, rootNavController: NavController) {
     NavHost(
-        navController = navController,
+        navController = bottomNavigationController,
         startDestination = MainNavigation.GameListScreen
     ) {
         composable(MainNavigation.GameListScreen) {
-            CollectionScreen(navigateToDetails)
+            CollectionScreen {
+                rootNavController.navigate(GameNavigation.detailsScreen(it))
+            }
         }
         composable(MainNavigation.GameplayListScreen) {
-            PlayedGamesScreen()
+            PlayedGamesScreen {
+                rootNavController.navigate(GameNavigation.gameplayDetailsScreen(it))
+            }
         }
     }
 }

@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BoardGameDao {
-    @Query("SELECT * FROM boardgame WHERE isExpansion = FALSE")
+    @Query("SELECT * FROM boardgame WHERE isExpansion = FALSE ORDER BY lower(trim(name)) ASC")
     fun getAllBoardGames(): Flow<List<BoardGame>>
 
     @Query("SELECT * FROM boardgame WHERE isExpansion = TRUE")

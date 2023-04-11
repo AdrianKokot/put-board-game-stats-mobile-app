@@ -67,4 +67,8 @@ interface GameplayDao {
     suspend fun insertPlayers(vararg players: Player)
 
 
+    @Transaction
+    @Query("SELECT * FROM gameplay WHERE id in (SELECT id FROM gameplay GROUP BY boardGameId) ORDER BY date DESC")
+    fun getGameplayListWithUniqueGames(): Flow<List<GameplayWithGame>>
+
 }

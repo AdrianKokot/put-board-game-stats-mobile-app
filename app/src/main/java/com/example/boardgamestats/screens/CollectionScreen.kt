@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -78,7 +78,7 @@ fun GamesCollection(navigateToDetails: (Int) -> Unit) {
 @Composable
 fun CollectionList(list: List<BoardGame>, onItemClick: (item: BoardGame) -> Unit) {
     LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
-        itemsIndexed(list) { _, item ->
+        items(list) { item ->
             ListItem(
                 headlineContent = { Text(item.name) },
                 supportingContent = { Text(item.publishYear.toString()) },

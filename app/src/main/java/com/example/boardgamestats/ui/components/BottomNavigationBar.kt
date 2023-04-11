@@ -30,9 +30,7 @@ sealed class BottomBarScreen(
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
-    val screens = listOf(
-        BottomBarScreen.Collection, BottomBarScreen.PlayedGames
-    )
+    val screens = listOf(BottomBarScreen.Collection, BottomBarScreen.PlayedGames)
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -43,15 +41,18 @@ fun BottomNavigationBar(navController: NavHostController) {
                 it.route == screen.route
             } == true
 
-            NavigationBarItem(icon = {
-                Crossfade(targetState = selected) { selected ->
-                    Icon(
-                        imageVector = if (selected) screen.selectedIcon else screen.icon, contentDescription = null
-                    )
+            NavigationBarItem(
+                icon = {
+                    Crossfade(targetState = selected) { selected ->
+                        Icon(
+                            imageVector = if (selected) screen.selectedIcon else screen.icon, contentDescription = null
+                        )
+                    }
+                },
+                label = { Text(screen.title) }, selected = selected, onClick = {
+                    navController.navigate(screen.route)
                 }
-            }, label = { Text(screen.title) }, selected = selected, onClick = {
-                navController.navigate(screen.route)
-            })
+            )
         }
     }
 }

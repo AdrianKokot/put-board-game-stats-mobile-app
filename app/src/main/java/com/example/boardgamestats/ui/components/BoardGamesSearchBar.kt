@@ -18,9 +18,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.navigation.NavController
 import com.example.boardgamestats.api.queryXmlApi
 import com.example.boardgamestats.database.BoardGameDatabase
 import com.example.boardgamestats.models.BoardGame
+import com.example.boardgamestats.navigation.GameNavigation
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -125,15 +127,11 @@ fun BoardGamesSearchBar(navigateToDetails: (Int) -> Unit) {
 
             }
         ) {
-            Box(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.fillMaxSize().padding(bottom = 40.dp)) {
                 if (isLoading) {
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
                 } else if (searchResults.isNotEmpty()) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
+                    LazyColumn  {
                         items(searchResults.size) { idx ->
                             val boardGame = searchResults[idx]
                             ListItem(
