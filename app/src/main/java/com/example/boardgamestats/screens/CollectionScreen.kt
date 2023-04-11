@@ -20,6 +20,7 @@ import com.example.boardgamestats.database.BoardGameDatabase
 import com.example.boardgamestats.models.BoardGame
 import com.example.boardgamestats.ui.animations.SkeletonAnimatedColor
 import com.example.boardgamestats.ui.extensions.customTabIndicatorOffset
+import com.example.boardgamestats.utils.toDaysAgo
 
 @Composable
 fun CollectionScreen(navigateToDetails: (Int) -> Unit) {
@@ -66,13 +67,38 @@ fun CollectionScreen(navigateToDetails: (Int) -> Unit) {
 
 @Composable
 fun GamesCollection(navigateToDetails: (Int) -> Unit) {
-    BoardGameDatabase.getDatabase(LocalContext.current)
+    val list = BoardGameDatabase.getDatabase(LocalContext.current)
         .boardGameDao()
-        .getBoardGamesCollection()
+        .getBoardGamesCollectionWithPlayInformation()
         .collectAsState(initial = emptyList())
-        .let { state ->
-            CollectionList(state.value) { navigateToDetails(it.id) }
+        .value
+
+    LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
+        items(list) { item ->
+            ListItem(
+                headlineContent = { Text(item.boardGame.name) },
+                supportingContent = {
+                    if (item.playsCount > 0) {
+                        Text("Last played ${item.lastPlay.toDaysAgo().lowercase()}")
+                    } else {
+                        Text("Released in ${item.boardGame.publishYear}")
+                    }
+                },
+                leadingContent = {
+                    SubcomposeAsyncImage(
+                        modifier = Modifier.width(64.dp).height(64.dp).clip(MaterialTheme.shapes.extraSmall),
+                        model = item.boardGame.thumbnail,
+                        contentDescription = item.boardGame.name,
+                        contentScale = ContentScale.Crop,
+                        loading = {
+                            Box(Modifier.matchParentSize().background(SkeletonAnimatedColor()))
+                        }
+                    )
+                },
+                modifier = Modifier.clickable { navigateToDetails(item.boardGame.id) }
+            )
         }
+    }
 }
 
 @Composable
@@ -81,7 +107,9 @@ fun CollectionList(list: List<BoardGame>, onItemClick: (item: BoardGame) -> Unit
         items(list) { item ->
             ListItem(
                 headlineContent = { Text(item.name) },
-                supportingContent = { Text(item.publishYear.toString()) },
+                supportingContent = {
+                    Text("Released in ${item.publishYear}")
+                },
                 leadingContent = {
                     SubcomposeAsyncImage(
                         modifier = Modifier.width(64.dp).height(64.dp).clip(MaterialTheme.shapes.extraSmall),
@@ -107,7 +135,7 @@ fun ExpansionsCollection() {
         .getExpansionsCollection()
         .collectAsState(initial = emptyList())
         .let { state ->
-            CollectionList(state.value) {  }
+            CollectionList(state.value) { }
         }
 }
 

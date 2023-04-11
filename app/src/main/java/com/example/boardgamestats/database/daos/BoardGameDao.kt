@@ -2,6 +2,7 @@ package com.example.boardgamestats.database.daos
 
 import androidx.room.*
 import com.example.boardgamestats.models.BoardGame
+import com.example.boardgamestats.models.BoardGameWithPlaysInfo
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -9,13 +10,26 @@ interface BoardGameDao {
     @Query("SELECT * FROM boardgame WHERE isExpansion = FALSE ORDER BY lower(trim(name)) ASC")
     fun getAllBoardGames(): Flow<List<BoardGame>>
 
-    @Query("SELECT * FROM boardgame WHERE isExpansion = TRUE")
+
+
+    @Query("SELECT boardgame.*, g.date as lastPlay, g.times as playsCount " +
+            "FROM boardgame " +
+            "LEFT JOIN (" +
+            "   SELECT boardGameId, date, count(id) as times " +
+            "   FROM gameplay GROUP BY boardGameId ORDER BY date DESC" +
+            ") as g ON g.boardGameId = boardgame.id " +
+            "WHERE isExpansion = FALSE and inCollection = TRUE " +
+            "ORDER BY lower(trim(name)) ASC")
+    @Transaction
+    fun getBoardGamesCollectionWithPlayInformation(): Flow<List<BoardGameWithPlaysInfo>>
+
+    @Query("SELECT * FROM boardgame WHERE isExpansion = TRUE ORDER BY lower(trim(name)) ASC")
     fun getAllExpansions(): Flow<List<BoardGame>>
 
-    @Query("SELECT * FROM boardgame WHERE inCollection = TRUE and isExpansion = FALSE")
+    @Query("SELECT * FROM boardgame WHERE inCollection = TRUE and isExpansion = FALSE ORDER BY lower(trim(name)) ASC")
     fun getBoardGamesCollection(): Flow<List<BoardGame>>
 
-    @Query("SELECT * FROM boardgame WHERE inCollection = TRUE and isExpansion = TRUE")
+    @Query("SELECT * FROM boardgame WHERE inCollection = TRUE and isExpansion = TRUE ORDER BY lower(trim(name)) ASC")
     fun getExpansionsCollection(): Flow<List<BoardGame>>
 
     @Query("SELECT * FROM boardgame WHERE id = :id LIMIT 1")
