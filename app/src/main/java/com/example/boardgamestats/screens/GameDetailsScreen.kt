@@ -56,7 +56,9 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
 
     var boardGameDetailsJob by remember { mutableStateOf<Job?>(null) }
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val lazyListState = rememberLazyListState()
+    val isScrollable by remember { derivedStateOf { lazyListState.canScrollBackward || lazyListState.canScrollForward } }
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(canScroll = { isScrollable })
 
     boardGameDao.get(gameId).collectAsState(null).value?.let { boardGame ->
         if (boardGameDetailsJob == null && !boardGame.hasDetails) {
@@ -117,10 +119,8 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
                 if (!boardGame.hasDetails) {
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
                 } else {
-                    val scrollState = rememberLazyListState()
                     val plays = gameplayDao.getAllForGame(gameId).collectAsState(emptyList()).value
-                    LazyColumn(state = scrollState) {
-
+                    LazyColumn(state = lazyListState) {
                         item {
                             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                                 SubcomposeAsyncImage(model = boardGame.image,
