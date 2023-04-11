@@ -67,7 +67,10 @@ fun NewGameplayScreen(
 
     val players = newGamePlayViewModel.players
 
-    val alreadyExistingPlayerNames = dao.getAll().collectAsState(emptyList()).value.map { it.name }.toList()
+    val allPlayerNames = dao.getAll().collectAsState(emptyList()).value.map { it.name }.toList()
+    val pickedPlayers by remember { derivedStateOf { players.map { it.name }.filter { it.isNotEmpty() }.toSet() } }
+
+    val alreadyExistingPlayerNames = allPlayerNames.filter { !pickedPlayers.contains(it) }
 
     val scope = rememberCoroutineScope()
 
@@ -82,6 +85,10 @@ fun NewGameplayScreen(
         disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
     )
     var notes by rememberSaveable { mutableStateOf("") }
+
+    var submitted by rememberSaveable { mutableStateOf(false) }
+
+    val valid by remember { derivedStateOf { (players.isNotEmpty() && players.all { player -> player.score.toIntOrNull() != null && player.name.isNotEmpty() }) } }
 
     if (openDialog) {
         val confirmEnabled by remember { derivedStateOf { datePickerState.selectedDateMillis != null } }
@@ -155,22 +162,25 @@ fun NewGameplayScreen(
                 },
                 actions = {
                     FilledTonalButton(onClick = {
-                        scope.launch {
-                            gameplayDao.insert(
-                                Gameplay(
-                                    boardGameId = gameId,
-                                    date = dateInstant,
-                                    playtime = duration,
-                                    notes = notes
-                                ),
-                                players.map {
-                                    PlayerWithScoreDto(
-                                        playerName = it.name, score = it.score.toIntOrNull() ?: 0
-                                    )
-                                },
-                            )
+                        if (valid) {
+                            scope.launch {
+                                gameplayDao.insert(
+                                    Gameplay(
+                                        boardGameId = gameId,
+                                        date = dateInstant,
+                                        playtime = duration,
+                                        notes = notes
+                                    ),
+                                    players.map {
+                                        PlayerWithScoreDto(
+                                            playerName = it.name, score = it.score.toIntOrNull() ?: 0
+                                        )
+                                    },
+                                )
+                            }
+                            popBackStack()
                         }
-                        popBackStack()
+                        submitted = true
                     }, modifier = Modifier.padding(end = 16.dp)) {
                         Text("Save")
                     }
@@ -186,7 +196,6 @@ fun NewGameplayScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-
                         TextField(
                             value = DateFormat.getDateFormat(LocalContext.current).format(dateInstant),
                             readOnly = true,
@@ -204,7 +213,6 @@ fun NewGameplayScreen(
                                 openDialog = true
                             }
                         )
-
 
                         TextField(
                             value = duration.toTimeString(),
@@ -260,9 +268,12 @@ fun NewGameplayScreen(
                 itemsIndexed(players) { index, player ->
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                        verticalAlignment = Alignment.Top,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        val invalidScore = submitted && !valid && player.score.toIntOrNull() == null
+                        val invalidName = submitted && !valid && player.name.isEmpty()
+
                         TextField(
                             label = { Text("Score") },
                             value = player.score,
@@ -271,11 +282,16 @@ fun NewGameplayScreen(
                                     index, newScore = (it.toIntOrNull() ?: "").toString()
                                 )
                             },
-                            modifier = Modifier.weight(2f),
+                            modifier = Modifier.weight(3f),
                             keyboardOptions = KeyboardOptions.Default.copy(
                                 keyboardType = KeyboardType.Number,
                                 imeAction = ImeAction.Next
-                            )
+                            ),
+                            isError = invalidScore,
+                            singleLine = true,
+                            supportingText = if (invalidScore) {
+                                { Text("Score is required") }
+                            } else null
                         )
 
                         TextFieldWithDropdown(
@@ -284,13 +300,17 @@ fun NewGameplayScreen(
                             onValueChange = {
                                 newGamePlayViewModel.updatePlayer(index, newName = it)
                             },
-                            modifier = Modifier.weight(3f),
+                            modifier = Modifier.weight(4f),
                             options = alreadyExistingPlayerNames,
                             keyboardOptions = KeyboardOptions.Default.copy(
                                 keyboardType = KeyboardType.Text,
                                 autoCorrect = false,
                                 imeAction = if (players.size - 1 == index) ImeAction.Done else ImeAction.Next
-                            )
+                            ),
+                            isError = invalidName,
+                            supportingText = if (invalidScore) {
+                                { Text("Name is required") }
+                            } else null
                         )
 
                         IconButton(

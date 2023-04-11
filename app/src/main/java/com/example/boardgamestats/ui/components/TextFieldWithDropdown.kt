@@ -22,6 +22,8 @@ fun TextFieldWithDropdown(
     onValueChange: ((String) -> Unit)?,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    isError: Boolean = false,
+    supportingText: @Composable (() -> Unit)? = null,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     var selectedOptionText by rememberSaveable { mutableStateOf(value) }
@@ -46,6 +48,9 @@ fun TextFieldWithDropdown(
             keyboardActions = keyboardActions,
             keyboardOptions = keyboardOptions,
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
+            singleLine = true,
+            isError = isError,
+            supportingText = supportingText
         )
 
         if (filteringOptions.isNotEmpty()) {
