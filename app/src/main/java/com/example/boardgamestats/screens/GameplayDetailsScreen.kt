@@ -72,7 +72,7 @@ fun GameplayDetailsScreen(gameplayId: Int, navController: NavController) {
                             onDismissRequest = { expanded = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Delete") },
+                                text = { Text("Delete gameplay") },
                                 onClick = {
                                     scope.launch {
                                         gameplayDao.delete(gameplay!!.gameplay)

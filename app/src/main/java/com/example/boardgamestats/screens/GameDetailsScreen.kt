@@ -2,7 +2,6 @@ package com.example.boardgamestats.screens
 
 import android.text.Html
 import android.text.format.DateFormat
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,11 +11,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.BookmarkAdded
-import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -46,8 +42,6 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavHostController) {
-    val snackbarHostState = remember { SnackbarHostState() }
-
     val db = BoardGameDatabase.getDatabase(LocalContext.current)
     val boardGameDao = db.boardGameDao()
     val formatter = DateFormat.getDateFormat(LocalContext.current)
@@ -57,8 +51,9 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
     var boardGameDetailsJob by remember { mutableStateOf<Job?>(null) }
 
     val lazyListState = rememberLazyListState()
-    val isScrollable by remember { derivedStateOf { lazyListState.canScrollBackward || lazyListState.canScrollForward } }
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(canScroll = { isScrollable })
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    val scope = rememberCoroutineScope()
 
     boardGameDao.get(gameId).collectAsState(null).value?.let { boardGame ->
         if (boardGameDetailsJob == null && !boardGame.hasDetails) {
@@ -69,52 +64,23 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
             }
         }
 
-        Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-            snackbarHost = { SnackbarHost(snackbarHostState) },
+        Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
-                MediumTopAppBar(scrollBehavior = scrollBehavior, title = {
-                    Text(
-                        boardGame.name, maxLines = 1, overflow = TextOverflow.Ellipsis
-                    )
-                }, navigationIcon = {
-                    IconButton(onClick = popBackStack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = null)
-                    }
-                }, actions = {
-                    Crossfade(boardGame.inCollection) { isInCollection ->
-                        PlainTooltipBox(tooltip = {
-                            Text(if (isInCollection) "Remove from collection" else "Add to collection")
-                        }) {
-                            IconButton(onClick = {
-                                GlobalScope.launch {
-                                    boardGameDao.updateCollection(gameId, !isInCollection)
-
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                    snackbarHostState.showSnackbar(
-                                        message = if (isInCollection) "Removed from collection" else "Added to collection",
-                                        duration = SnackbarDuration.Short,
-                                        withDismissAction = true
-                                    )
-                                }
-                            }, modifier = Modifier.tooltipAnchor()) {
-                                if (isInCollection) {
-                                    Icon(Icons.Filled.BookmarkAdded, contentDescription = "Remove from collection")
-                                } else {
-                                    Icon(Icons.Outlined.BookmarkAdd, contentDescription = "Add to collection")
-                                }
-                            }
+                MediumTopAppBar(
+                    scrollBehavior = scrollBehavior,
+                    title = {
+                        Text(
+                            boardGame.name, maxLines = 1, overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = popBackStack) {
+                            Icon(Icons.Filled.ArrowBack, contentDescription = null)
                         }
-                    }
-
-                })
-            },
-            floatingActionButton = {
-                FloatingActionButton(onClick = {
-                    navController.navigate(GameNavigation.newGameplayScreen(gameId))
-                }) {
-                    Icon(Icons.Filled.Add, contentDescription = null)
-                }
-            }) { padding ->
+                    })
+            }
+        ) { padding ->
             Box(Modifier.padding(padding).fillMaxWidth()) {
                 if (!boardGame.hasDetails) {
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
@@ -141,7 +107,31 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
 
                             }
 
-                            Spacer(modifier = Modifier.height(32.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = {
+                                        scope.launch {
+                                            boardGameDao.updateCollection(gameId, !boardGame.inCollection)
+                                        }
+                                    }
+                                ) {
+                                    Text(if (boardGame.inCollection) "Remove from collection" else "Add to collection")
+                                }
+
+                                FilledTonalButton(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = {
+                                        navController.navigate(GameNavigation.newGameplayScreen(gameId))
+                                    }
+                                ) {
+                                    Text("Add play")
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
 
                         if (plays.isNotEmpty()) {
@@ -269,10 +259,11 @@ fun SectionTitle(
         if (onArrowClick != null) {
             IconButton(
                 onClick = onArrowClick,
-                modifier = Modifier.size(textStyle.lineHeight.value.dp)
+                modifier = Modifier.size(textStyle.lineHeight.value.dp),
             ) {
                 Icon(
                     Icons.Default.ArrowForward,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     contentDescription = null,
                     modifier = Modifier.size(textStyle.fontSize.value.dp)
                 )

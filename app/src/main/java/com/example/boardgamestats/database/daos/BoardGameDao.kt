@@ -45,7 +45,7 @@ interface BoardGameDao {
     fun delete(boardGame: BoardGame)
 
     @Query("UPDATE boardgame SET inCollection = :inCollection WHERE id = :id")
-    fun updateCollection(id: Int, inCollection: Boolean)
+    suspend fun updateCollection(id: Int, inCollection: Boolean)
 
     @Query("UPDATE boardgame SET thumbnail = :thumbnail, image = :image, description = :description, hasDetails = true, isExpansion = :isExpansion WHERE id = :id")
     fun updateDetails(id: Int, thumbnail: String, image: String, description: String, isExpansion: Boolean)
