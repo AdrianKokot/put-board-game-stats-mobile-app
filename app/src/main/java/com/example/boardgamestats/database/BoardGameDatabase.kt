@@ -28,7 +28,7 @@ abstract class BoardGameDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): BoardGameDatabase {
             return Instance ?: synchronized(this) {
-                Room.databaseBuilder(context, BoardGameDatabase::class.java, "board-game-stats-23").build()
+                Room.databaseBuilder(context, BoardGameDatabase::class.java, "board-game-stats-33").build()
                     .also { Instance = it }
             }
         }

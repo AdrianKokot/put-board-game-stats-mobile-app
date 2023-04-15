@@ -1,16 +1,23 @@
 package com.example.boardgamestats.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.*
+import androidx.navigation.NavController
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.boardgamestats.screens.*
+import androidx.navigation.navigation
+import com.example.boardgamestats.api.AuthScreen
+import com.example.boardgamestats.screens.CollectionScreen
+import com.example.boardgamestats.screens.MainScreen
+import com.example.boardgamestats.screens.PlayedGamesScreen
 
 object MainNavigation {
     const val RootRoute = "MainNavigation_RootRoute"
     const val MainScreen = "MainNavigation_MainScreen"
     const val GameListScreen = "MainNavigation_GameListScreen"
     const val GameplayListScreen = "MainNavigation_GameplayListScreen"
+    const val AuthScreen = "MainNavigation_AuthScreen"
 }
 
 fun NavGraphBuilder.MainNavigationGraph(navController: NavHostController) {
@@ -38,6 +45,10 @@ fun BottomNavigationGraph(bottomNavigationController: NavHostController, rootNav
             PlayedGamesScreen {
                 rootNavController.navigate(GameNavigation.gameplayDetailsScreen(it))
             }
+        }
+
+        composable(MainNavigation.AuthScreen) {
+            AuthScreen()
         }
     }
 }

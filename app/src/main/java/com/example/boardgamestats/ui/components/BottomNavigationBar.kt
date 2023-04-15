@@ -26,11 +26,13 @@ sealed class BottomBarScreen(
 
     object PlayedGames :
         BottomBarScreen(MainNavigation.GameplayListScreen, "Played Games", Icons.Outlined.Casino, Icons.Filled.Casino)
+
+    object Auth : BottomBarScreen(MainNavigation.AuthScreen, "Auth", Icons.Outlined.Casino, Icons.Filled.Casino)
 }
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
-    val screens = listOf(BottomBarScreen.Collection, BottomBarScreen.PlayedGames)
+    val screens = listOf(BottomBarScreen.Collection, BottomBarScreen.PlayedGames, BottomBarScreen.Auth)
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
