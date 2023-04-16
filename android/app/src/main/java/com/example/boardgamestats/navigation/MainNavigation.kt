@@ -17,7 +17,6 @@ object MainNavigation {
     const val MainScreen = "MainNavigation_MainScreen"
     const val GameListScreen = "MainNavigation_GameListScreen"
     const val GameplayListScreen = "MainNavigation_GameplayListScreen"
-    const val AuthScreen = "MainNavigation_AuthScreen"
 }
 
 fun NavGraphBuilder.MainNavigationGraph(navController: NavHostController) {
@@ -45,10 +44,6 @@ fun BottomNavigationGraph(bottomNavigationController: NavHostController, rootNav
             PlayedGamesScreen {
                 rootNavController.navigate(GameNavigation.gameplayDetailsScreen(it))
             }
-        }
-
-        composable(MainNavigation.AuthScreen) {
-            AuthScreen()
         }
     }
 }

@@ -7,6 +7,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.util.Log.d
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.foundation.layout.Column
@@ -63,14 +64,14 @@ class GoogleApiContract : ActivityResultContract<Int?, Task<GoogleSignInAccount>
     }
 }
 
-data class GoogleUserModel(val id: String?, val name: String?, val email: String?)
+data class GoogleUserModel(val id: String?, val name: String?, val email: String?, val photoUrl: String?)
 
 class SignInGoogleViewModel(application: Application) : AndroidViewModel(application) {
     private var _userState = MutableLiveData<GoogleUserModel>()
     val googleUser: LiveData<GoogleUserModel> = _userState
     private var _loadingState = MutableLiveData(false)
     val loading: LiveData<Boolean> = _loadingState
-    fun fetchSignInUser(id: String?, email: String?, name: String?) {
+    fun fetchSignInUser(id: String?, email: String?, name: String?, photoUrl: String?) {
         _loadingState.value = true
         viewModelScope.launch {
             _userState.value =
@@ -78,6 +79,7 @@ class SignInGoogleViewModel(application: Application) : AndroidViewModel(applica
                     id = id,
                     email = email,
                     name = name,
+                    photoUrl = photoUrl
                 )
         }
         _loadingState.value = false
@@ -90,6 +92,12 @@ class SignInGoogleViewModel(application: Application) : AndroidViewModel(applica
     fun showLoading() {
         _loadingState.value = true
     }
+
+    fun loadAlreadySignedUser() {
+        GoogleSignIn.getLastSignedInAccount(getApplication())?.let {
+            fetchSignInUser(it.id, it.email, it.displayName, it.photoUrl.toString())
+        }
+    }
 }
 
 @Composable
@@ -100,7 +108,7 @@ fun AuthScreen() {
 
     var idToken: String? = null
     GoogleSignIn.getLastSignedInAccount(LocalContext.current)?.let {
-        mSignInViewModel.fetchSignInUser(it.id, it.email, it.displayName)
+        mSignInViewModel.fetchSignInUser(it.id, it.email, it.displayName, it.photoUrl.toString())
         idToken = it.idToken
     }
 
@@ -111,8 +119,7 @@ fun AuthScreen() {
             try {
                 val gsa = task?.getResult(ApiException::class.java)
                 if (gsa != null) {
-
-                    mSignInViewModel.fetchSignInUser(gsa.id, gsa.email, gsa.displayName)
+                    mSignInViewModel.fetchSignInUser(gsa.id, gsa.email, gsa.displayName, gsa.photoUrl.toString())
                 } else {
                     isError.value = true
                 }
