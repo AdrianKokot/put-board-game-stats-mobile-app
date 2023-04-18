@@ -31,6 +31,7 @@ import com.example.boardgamestats.api.SignInGoogleViewModel
 import com.example.boardgamestats.api.queryXmlApi
 import com.example.boardgamestats.database.BoardGameDatabase
 import com.example.boardgamestats.models.BoardGame
+import com.example.boardgamestats.sync.SyncManager
 import com.google.android.gms.common.api.ApiException
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -150,7 +151,11 @@ fun BoardGamesSearchBar(navigateToDetails: (Int) -> Unit) {
                         } else if (user == null) {
                             IconButton(
                                 onClick = {
-                                    authLauncher.launch(0)
+                                    if (false) {
+                                        authLauncher.launch(0)
+                                    } else {
+                                        SyncManager.forceSync()
+                                    }
                                 }
                             ) {
                                 Icon(
@@ -161,7 +166,7 @@ fun BoardGamesSearchBar(navigateToDetails: (Int) -> Unit) {
                         } else {
                             IconButton(
                                 onClick = {
-
+                                    SyncManager.forceSync()
                                 }
                             ) {
                                 SubcomposeAsyncImage(

@@ -30,11 +30,13 @@ fun PlayedGamesScreen(navigateToGameplayDetails: (Int) -> Unit) {
         .getGameplayListWithUniqueGames()
         .collectAsState(initial = emptyList()).value
 
+    val context = LocalContext.current
+
     LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
         items(list) { item ->
             ListItem(
                 headlineContent = { Text(item.boardGame.name) },
-                supportingContent = { Text(item.gameplay.date.toDaysAgo()) },
+                supportingContent = { Text(item.gameplay.date.toDaysAgo(context)) },
                 leadingContent = {
                     SubcomposeAsyncImage(
                         modifier = Modifier.width(64.dp).height(64.dp).clip(MaterialTheme.shapes.extraSmall),

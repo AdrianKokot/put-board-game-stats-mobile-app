@@ -3,7 +3,6 @@ package com.example.boardgamestats.models
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.Relation
 
 
 @Entity
@@ -17,7 +16,8 @@ data class BoardGame(
     val inCollection: Boolean = false,
     val image: String? = null,
     val hasDetails: Boolean = false,
-    val isExpansion: Boolean = false
+    val isExpansion: Boolean = false,
+    val updatedAt: Long = System.currentTimeMillis()
 )
 
 

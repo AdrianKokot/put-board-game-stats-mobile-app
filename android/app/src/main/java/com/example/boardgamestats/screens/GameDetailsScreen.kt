@@ -191,6 +191,8 @@ fun GameplayStatisticsOverview(
     gridTitleTextStyle: TextStyle = MaterialTheme.typography.titleMedium,
     gridLabelTextStyle: TextStyle = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
 ) {
+    val context = LocalContext.current
+
     if (plays.isEmpty()) {
         return
     }
@@ -204,7 +206,7 @@ fun GameplayStatisticsOverview(
                     "Lowest score" to plays.flatMap { it.playerResults }.minByOrNull { it.score }?.score.toString()
                 ),
                 listOf(
-                    "Last played" to plays.maxByOrNull { it.gameplay.date }!!.gameplay.date.toDaysAgo(),
+                    "Last played" to plays.maxByOrNull { it.gameplay.date }!!.gameplay.date.toDaysAgo(context),
                     "Avg playtime" to plays.mapNotNull { it.gameplay.playtime }
                         .filter { it > 0 }
                         .average()

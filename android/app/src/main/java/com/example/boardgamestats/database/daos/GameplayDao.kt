@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface GameplayDao {
-    @Query("SELECT * FROM gameplay WHERE boardGameId = :boardGameId ORDER BY date DESC")
+    @Query("SELECT * FROM gameplay WHERE boardGameId = :boardGameId and deletedAt is null ORDER BY date DESC")
     fun getAllForGame(boardGameId: Int): Flow<List<GameplayWithPlayers>>
 
     @Transaction
@@ -29,17 +29,9 @@ interface GameplayDao {
     @Query("SELECT * FROM player WHERE name = :name LIMIT 1")
     fun getPlayerByName(name: String): Player?
 
-
-
     @Transaction
-    @Delete
-    suspend fun delete(gameplay: Gameplay)
-
-    @Transaction
-    @Delete
-    suspend fun delete(gameplay: Int) {
-        this.getGameplay(gameplay).let { this.delete(it) }
-    }
+    @Query("UPDATE gameplay SET deletedAt = :deletedAt WHERE id = :gameplay")
+    suspend fun delete(gameplay: Int, deletedAt: Long = System.currentTimeMillis())
 
     @Transaction
     @Insert
@@ -66,9 +58,7 @@ interface GameplayDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertPlayers(vararg players: Player)
 
-
     @Transaction
-    @Query("SELECT * FROM gameplay WHERE id in (SELECT id FROM gameplay GROUP BY boardGameId) ORDER BY date DESC")
+    @Query("SELECT * FROM gameplay WHERE id in (SELECT id FROM gameplay WHERE deletedAt is null GROUP BY boardGameId) ORDER BY date DESC")
     fun getGameplayListWithUniqueGames(): Flow<List<GameplayWithGame>>
-
 }

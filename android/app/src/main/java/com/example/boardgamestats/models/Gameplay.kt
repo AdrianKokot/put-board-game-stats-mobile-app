@@ -9,7 +9,9 @@ data class Gameplay(
     val boardGameId: Int,
     val date: Long,
     val notes: String = "",
-    val playtime: Long? = null
+    val playtime: Long? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val deletedAt: Long? = null
 )
 
 @Entity(

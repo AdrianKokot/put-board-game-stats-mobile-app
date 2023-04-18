@@ -75,7 +75,7 @@ fun GameplayDetailsScreen(gameplayId: Int, navController: NavController) {
                                 text = { Text("Delete gameplay") },
                                 onClick = {
                                     scope.launch {
-                                        gameplayDao.delete(gameplay!!.gameplay)
+                                        gameplayDao.delete(gameplay!!.gameplay.id)
                                     }
 
                                     navController.popBackStack()

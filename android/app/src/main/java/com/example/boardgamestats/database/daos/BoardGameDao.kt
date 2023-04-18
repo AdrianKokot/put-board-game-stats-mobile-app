@@ -10,16 +10,16 @@ interface BoardGameDao {
     @Query("SELECT * FROM boardgame WHERE isExpansion = FALSE ORDER BY lower(trim(name)) ASC")
     fun getAllBoardGames(): Flow<List<BoardGame>>
 
-
-
-    @Query("SELECT boardgame.*, g.date as lastPlay, g.times as playsCount " +
-            "FROM boardgame " +
-            "LEFT JOIN (" +
-            "   SELECT boardGameId, date, count(id) as times " +
-            "   FROM gameplay GROUP BY boardGameId ORDER BY date DESC" +
-            ") as g ON g.boardGameId = boardgame.id " +
-            "WHERE isExpansion = FALSE and inCollection = TRUE " +
-            "ORDER BY lower(trim(name)) ASC")
+    @Query(
+        "SELECT boardgame.*, g.date as lastPlay, g.times as playsCount " +
+                "FROM boardgame " +
+                "LEFT JOIN (" +
+                "   SELECT boardGameId, date, count(id) as times " +
+                "   FROM gameplay WHERE deletedAt is null GROUP BY boardGameId ORDER BY date DESC" +
+                ") as g ON g.boardGameId = boardgame.id " +
+                "WHERE isExpansion = FALSE and inCollection = TRUE " +
+                "ORDER BY lower(trim(name)) ASC"
+    )
     @Transaction
     fun getBoardGamesCollectionWithPlayInformation(): Flow<List<BoardGameWithPlaysInfo>>
 
@@ -41,11 +41,8 @@ interface BoardGameDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertAll(vararg boardGames: BoardGame)
 
-    @Delete
-    fun delete(boardGame: BoardGame)
-
-    @Query("UPDATE boardgame SET inCollection = :inCollection WHERE id = :id")
-    suspend fun updateCollection(id: Int, inCollection: Boolean)
+    @Query("UPDATE boardgame SET inCollection = :inCollection, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateCollection(id: Int, inCollection: Boolean, updatedAt: Long = System.currentTimeMillis())
 
     @Query("UPDATE boardgame SET thumbnail = :thumbnail, image = :image, description = :description, hasDetails = true, isExpansion = :isExpansion WHERE id = :id")
     fun updateDetails(id: Int, thumbnail: String, image: String, description: String, isExpansion: Boolean)

@@ -70,8 +70,10 @@ fun GamesCollection(navigateToDetails: (Int) -> Unit) {
     val list = BoardGameDatabase.getDatabase(LocalContext.current)
         .boardGameDao()
         .getBoardGamesCollectionWithPlayInformation()
-        .collectAsState(initial = emptyList())
+        .collectAsState(emptyList())
         .value
+
+    val context = LocalContext.current
 
     LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
         items(list) { item ->
@@ -79,7 +81,7 @@ fun GamesCollection(navigateToDetails: (Int) -> Unit) {
                 headlineContent = { Text(item.boardGame.name) },
                 supportingContent = {
                     if (item.playsCount > 0) {
-                        Text("Last played ${item.lastPlay.toDaysAgo().lowercase()}")
+                        Text("Last played ${item.lastPlay.toDaysAgo(context).lowercase()}")
                     } else {
                         Text("Released in ${item.boardGame.publishYear}")
                     }
