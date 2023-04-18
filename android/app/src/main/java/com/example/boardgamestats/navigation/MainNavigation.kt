@@ -7,7 +7,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.example.boardgamestats.api.AuthScreen
 import com.example.boardgamestats.screens.CollectionScreen
 import com.example.boardgamestats.screens.MainScreen
 import com.example.boardgamestats.screens.PlayedGamesScreen
