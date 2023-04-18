@@ -51,7 +51,10 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
     var boardGameDetailsJob by remember { mutableStateOf<Job?>(null) }
 
     val lazyListState = rememberLazyListState()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val topAppBarState = rememberTopAppBarState()
+    val isScrollable by remember { derivedStateOf { lazyListState.canScrollForward || topAppBarState.collapsedFraction > 0 } }
+
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState, canScroll = { isScrollable })
 
     val scope = rememberCoroutineScope()
 
