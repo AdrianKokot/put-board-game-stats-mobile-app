@@ -8,7 +8,8 @@ import kotlinx.serialization.Serializable
 data class SyncData(
     val lastSync: Long,
     val boardGames: SyncedCollection,
-    val plays: SyncedPlays
+    val plays: SyncedPlays,
+    val currentSync: Long
 )
 
 @Serializable
@@ -98,6 +99,7 @@ interface SyncDao {
 
         return SyncData(
             lastSync = lastSync.lastSync,
+            currentSync = System.currentTimeMillis(),
             boardGames = SyncedCollection(
                 addedToCollection = updatedBoardGames.filter { it.inCollection }.map {
                     AddedToCollectionBoardGame(

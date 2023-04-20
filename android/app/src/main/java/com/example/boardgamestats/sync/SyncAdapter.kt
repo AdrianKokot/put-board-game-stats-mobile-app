@@ -67,6 +67,6 @@ class SyncAdapter(private val context: Context, autoInitialize: Boolean) :
             syncDao.syncGameplay(it)
         }
 
-        syncDao.setLastSync(responseSyncData.lastSync)
+        syncDao.setLastSync(responseSyncData.currentSync)
     }
 }
