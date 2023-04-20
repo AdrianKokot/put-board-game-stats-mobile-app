@@ -1,5 +1,8 @@
 {
     "require": {
-        "google/apiclient": "^2.13"
+        "google/apiclient": "^2.13",
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "ext-json": "*"
     }
 }
