@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.update
 
 data class SyncState(
     val isSyncing: Boolean = false,
-    val isSyncEnabled: Boolean = true
+    val isSyncEnabled: Boolean = false
 )
 
 data class UserState(
@@ -20,11 +20,18 @@ data class UserState(
     val idToken: String? = null
 )
 
+data class UserSettingsState(
+    val isSyncEnabled: Boolean = true
+)
+
 class MainViewModel : ViewModel() {
     private val _syncState = MutableStateFlow(SyncState())
     private val _userState = MutableStateFlow(UserState())
+    private val _userSettingsState = MutableStateFlow(UserSettingsState())
+
     val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
     val userState: StateFlow<UserState> = _userState.asStateFlow()
+    val userSettingsState: StateFlow<UserSettingsState> = _userSettingsState.asStateFlow()
 
     init {
         ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE) {
@@ -41,7 +48,7 @@ class MainViewModel : ViewModel() {
     }
 
     fun startSync() {
-        if (_syncState.value.isSyncEnabled && _userState.value.isUserLoggedIn) {
+        if (_syncState.value.isSyncEnabled) {
             SyncManager.forceSync()
             _syncState.update { currentState ->
                 currentState.copy(isSyncing = true)
@@ -56,6 +63,9 @@ class MainViewModel : ViewModel() {
                 photoUrl = photoUrl,
                 idToken = idToken
             )
+        }
+        _syncState.update {
+            it.copy(isSyncEnabled = idToken != null && _userSettingsState.value.isSyncEnabled)
         }
     }
 }
