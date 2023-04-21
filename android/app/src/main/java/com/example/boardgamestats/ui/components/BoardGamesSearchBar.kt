@@ -13,7 +13,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -26,12 +25,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
+import com.example.boardgamestats.MainActivity
 import com.example.boardgamestats.api.GoogleApiContract
-import com.example.boardgamestats.api.SignInGoogleViewModel
 import com.example.boardgamestats.api.queryXmlApi
 import com.example.boardgamestats.database.BoardGameDatabase
 import com.example.boardgamestats.models.BoardGame
 import com.example.boardgamestats.sync.SyncManager
+import com.example.boardgamestats.vm.MainViewModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -41,7 +42,10 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-fun BoardGamesSearchBar(navigateToDetails: (Int) -> Unit) {
+fun BoardGamesSearchBar(
+    mainViewModel: MainViewModel = viewModel(LocalContext.current as MainActivity),
+    navigateToDetails: (Int) -> Unit
+) {
     var text by rememberSaveable { mutableStateOf("") }
     var previousText by rememberSaveable { mutableStateOf("") }
     var active by rememberSaveable { mutableStateOf(false) }
@@ -49,16 +53,17 @@ fun BoardGamesSearchBar(navigateToDetails: (Int) -> Unit) {
     var searchResults by rememberSaveable { mutableStateOf(emptyList<BoardGame>()) }
     var isLoading by rememberSaveable { mutableStateOf(false) }
 
-    val googleViewModel: SignInGoogleViewModel = viewModel()
-    googleViewModel.loadAlreadySignedUser()
-    val user = googleViewModel.googleUser.observeAsState().value
-    val isUserLoading = googleViewModel.loading.observeAsState(true).value
+    GoogleSignIn.getLastSignedInAccount(LocalContext.current)?.let {
+        mainViewModel.fetchUser(it.idToken, it.photoUrl.toString())
+    }
+
+    val user = mainViewModel.userState.collectAsState().value
 
     val authLauncher = rememberLauncherForActivityResult(contract = GoogleApiContract()) { task ->
         try {
             val gsa = task?.getResult(ApiException::class.java)
             if (gsa != null) {
-                googleViewModel.fetchSignInUser(gsa.id, gsa.email, gsa.displayName, gsa.photoUrl.toString())
+                mainViewModel.fetchUser(gsa.idToken, gsa.photoUrl.toString())
             }
         } catch (e: ApiException) {
             Log.d("Error in getAuthLauncher%s", e.toString())
@@ -75,11 +80,10 @@ fun BoardGamesSearchBar(navigateToDetails: (Int) -> Unit) {
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    val dao = BoardGameDatabase.getDatabase(LocalContext.current)
-        .boardGameDao()
+    val dao = BoardGameDatabase.getDatabase(LocalContext.current).boardGameDao()
 
-    val userIconLoading = @Composable() {
-        CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 3.dp, color = MaterialTheme.colorScheme.surface)
+    val userIconLoading = @Composable {
+        CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 3.dp, color = MaterialTheme.colorScheme.onPrimaryContainer)
     }
 
     Box(Modifier.fillMaxWidth().zIndex(3f).padding(bottom = 8.dp)) {
@@ -95,11 +99,9 @@ fun BoardGamesSearchBar(navigateToDetails: (Int) -> Unit) {
                     searchJob = GlobalScope.launch {
                         searchResults =
                             queryXmlApi("https://www.boardgamegeek.com/xmlapi2/search?type=boardgame&query=$text")
-//                                .sortedByDescending { it.publishYear }
 
                         if (searchResults.isNotEmpty()) {
-                            dao
-                                .insertAll(*searchResults.toTypedArray())
+                            dao.insertAll(*searchResults.toTypedArray())
                         }
 
                         isLoading = false
@@ -123,20 +125,18 @@ fun BoardGamesSearchBar(navigateToDetails: (Int) -> Unit) {
             placeholder = { Text("Search games") },
             leadingIcon = {
                 if (showOpenedIcons) {
-                    IconButton(
-                        onClick = {
-                            active = false
-                            searchResults = emptyList()
-                            searchJob?.cancel()
-                            isLoading = false
-                            searchJob = null
-                            wasSearched = false
-                            text = ""
-                            previousText = ""
-                        }) {
+                    IconButton(onClick = {
+                        active = false
+                        searchResults = emptyList()
+                        searchJob?.cancel()
+                        isLoading = false
+                        searchJob = null
+                        wasSearched = false
+                        text = ""
+                        previousText = ""
+                    }) {
                         Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "Back"
+                            Icons.Default.ArrowBack, contentDescription = "Back"
                         )
                     }
                 } else {
@@ -146,34 +146,26 @@ fun BoardGamesSearchBar(navigateToDetails: (Int) -> Unit) {
             trailingIcon = {
                 Crossfade(targetState = !active) {
                     if (it) {
-                        if (isUserLoading) {
-                            userIconLoading()
-                        } else if (user == null) {
-                            IconButton(
-                                onClick = {
-                                    authLauncher.launch(0)
-                                }
-                            ) {
+                        if (!user.isUserLoggedIn) {
+                            IconButton(onClick = {
+                                authLauncher.launch(0)
+                            }) {
                                 Icon(
-                                    Icons.Outlined.AccountCircle,
-                                    contentDescription = "Account"
+                                    Icons.Outlined.AccountCircle, contentDescription = "Account"
                                 )
                             }
                         } else {
-                            IconButton(
-                                onClick = {
-                                    SyncManager.forceSync()
-                                }
-                            ) {
-                                SubcomposeAsyncImage(
-                                    modifier = Modifier.size(32.dp).clip(MaterialTheme.shapes.extraLarge),
+                            IconButton(onClick = {
+                                SyncManager.forceSync()
+                            }) {
+                                SubcomposeAsyncImage(modifier = Modifier.size(32.dp)
+                                    .clip(MaterialTheme.shapes.extraLarge),
                                     model = user.photoUrl,
                                     contentDescription = "Profile picture",
                                     contentScale = ContentScale.Crop,
                                     loading = {
                                         userIconLoading()
-                                    }
-                                )
+                                    })
                             }
                         }
                     }
@@ -183,15 +175,13 @@ fun BoardGamesSearchBar(navigateToDetails: (Int) -> Unit) {
                     if (it) {
                         IconButton(onClick = { text = "" }) {
                             Icon(
-                                Icons.Default.Clear,
-                                contentDescription = "Clear"
+                                Icons.Default.Clear, contentDescription = "Clear"
                             )
                         }
                     }
                 }
 
-            }
-        ) {
+            }) {
             Box(modifier = Modifier.fillMaxSize().padding(bottom = 40.dp)) {
                 if (isLoading) {
                     CircularProgressIndicator(Modifier.align(Alignment.Center))

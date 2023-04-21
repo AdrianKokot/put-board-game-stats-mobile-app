@@ -6,6 +6,7 @@ require_once 'vendor/autoload.php';
 define("CONNECTION_STRING", getenv("CONNECTION_STRING"));
 define("GOOGLE_CLIENT_ID", getenv("GOOGLE_CLIENT_ID"));
 
+
 class Response
 {
     public $httpCode = 200;

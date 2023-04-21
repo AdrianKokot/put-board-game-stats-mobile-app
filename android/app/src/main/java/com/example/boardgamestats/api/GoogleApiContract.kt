@@ -40,39 +40,3 @@ class GoogleApiContract : ActivityResultContract<Int?, Task<GoogleSignInAccount>
         }
     }
 }
-
-data class GoogleUserModel(val id: String?, val name: String?, val email: String?, val photoUrl: String?)
-
-class SignInGoogleViewModel(application: Application) : AndroidViewModel(application) {
-    private var _userState = MutableLiveData<GoogleUserModel>()
-    val googleUser: LiveData<GoogleUserModel> = _userState
-    private var _loadingState = MutableLiveData(false)
-    val loading: LiveData<Boolean> = _loadingState
-    fun fetchSignInUser(id: String?, email: String?, name: String?, photoUrl: String?) {
-        _loadingState.value = true
-        viewModelScope.launch {
-            _userState.value =
-                GoogleUserModel(
-                    id = id,
-                    email = email,
-                    name = name,
-                    photoUrl = photoUrl
-                )
-        }
-        _loadingState.value = false
-    }
-
-    fun hideLoading() {
-        _loadingState.value = false
-    }
-
-    fun showLoading() {
-        _loadingState.value = true
-    }
-
-    fun loadAlreadySignedUser() {
-        GoogleSignIn.getLastSignedInAccount(getApplication())?.let {
-            fetchSignInUser(it.id, it.email, it.displayName, it.photoUrl.toString())
-        }
-    }
-}

@@ -43,6 +43,7 @@ class SyncAdapter(private val context: Context, autoInitialize: Boolean) :
             .callTimeout(30, TimeUnit.SECONDS)
             .build()
 
+        Log.d("SyncAdapter", json.toString())
         val requestBody = json.toString().toRequestBody("application/json".toMediaTypeOrNull())
 
         val request = Request.Builder()
@@ -53,7 +54,7 @@ class SyncAdapter(private val context: Context, autoInitialize: Boolean) :
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw IOException("Unexpected code $response")
 
-            Log.d("SyncAdapter", "got response ${response.code}")
+            Log.d("SyncAdapter", "got response ${response.code} ${response.body!!.toString()}")
             val responseSyncData = Json.decodeFromStream<SyncData>(response.body!!.byteStream())
             processSyncData(responseSyncData)
         }
