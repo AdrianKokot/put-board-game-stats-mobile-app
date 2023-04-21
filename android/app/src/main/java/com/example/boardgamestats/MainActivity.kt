@@ -13,7 +13,6 @@ import com.example.boardgamestats.navigation.RootNavigationGraph
 import com.example.boardgamestats.sync.SyncManager
 import com.example.boardgamestats.ui.theme.BoardGameStatsTheme
 
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
