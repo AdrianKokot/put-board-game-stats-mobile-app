@@ -23,6 +23,15 @@ data class AddedToCollectionBoardGame(
 )
 
 @Serializable
+data class SyncableBoardGame(
+    val id: Int,
+    val isExpansion: Boolean,
+    val thumbnail: String? = null,
+    val publishYear: Int,
+    val name: String
+)
+
+@Serializable
 data class RemovedFromCollectionBoardGame(
     val id: Int,
     val updatedAt: Long
@@ -60,7 +69,8 @@ data class SyncedGameplayPlayer(
 @Serializable
 data class SyncedPlays(
     val added: List<SyncedGameplay>,
-    val deleted: List<SyncedDeletedGameplay>
+    val deleted: List<SyncedDeletedGameplay>,
+    val boardGames: List<SyncableBoardGame> = emptyList()
 )
 
 @Entity
@@ -84,6 +94,10 @@ interface SyncDao {
     @Transaction
     @Query("SELECT * FROM gameplay WHERE createdAt >= (SELECT lastSync FROM SyncInfo WHERE id = 1)")
     fun getNewPlays(): List<GameplayWithPlayers>
+
+    @Transaction
+    @Query("SELECT * FROM boardgame WHERE id in (SELECT boardGameId FROM gameplay WHERE createdAt >= (SELECT lastSync FROM SyncInfo WHERE id = 1))")
+    fun getBoardGamesFromNewPlays(): List<SyncableBoardGame>
 
     @Transaction
     @Query("SELECT * FROM gameplay WHERE deletedAt >= (SELECT lastSync FROM SyncInfo WHERE id = 1)")
@@ -130,13 +144,14 @@ interface SyncDao {
                         players = gameplay.playerResults.map { SyncedGameplayPlayer(it.playerName, it.score) }
                     )
                 },
-                deleted = getDeletedPlays().map { SyncedDeletedGameplay(it.id, it.deletedAt) }
+                deleted = getDeletedPlays().map { SyncedDeletedGameplay(it.id, it.deletedAt) },
+                boardGames = getBoardGamesFromNewPlays()
             )
         )
     }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertBoardGame(boardGame: BoardGame)
+    fun insertBoardGame(vararg boardGame: BoardGame)
 
     @Query("UPDATE boardgame SET inCollection = :inCollection, updatedAt = :updatedAt WHERE id = :id")
     fun updateBoardGame(id: Int, inCollection: Boolean, updatedAt: Long)

@@ -9,6 +9,7 @@ import android.os.Bundle
 import com.example.boardgamestats.R
 import com.example.boardgamestats.database.BoardGameDatabase
 import com.example.boardgamestats.database.daos.*
+import com.example.boardgamestats.models.BoardGame
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -50,6 +51,17 @@ class SyncAdapter(private val context: Context, autoInitialize: Boolean) :
     private fun processSyncData(responseSyncData: SyncData) {
         val database = BoardGameDatabase.getDatabase(context)
         val syncDao = database.syncDao()
+
+        syncDao.insertBoardGame(
+            *responseSyncData.plays.boardGames
+                .map {
+                    BoardGame(
+                        id = it.id,
+                        name = it.name,
+                        thumbnail = it.thumbnail, publishYear = it.publishYear
+                    )
+                }.toTypedArray()
+        )
 
         responseSyncData.boardGames.addedToCollection.forEach {
             syncDao.syncCollectionItem(it)

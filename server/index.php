@@ -59,7 +59,8 @@ function getResult($json)
         ],
         "plays" => [
             "added" => [],
-            "deleted" => []
+            "deleted" => [],
+            "boardGames" => []
         ]
     ];
 
@@ -70,6 +71,13 @@ function getResult($json)
         ]);
 
         $db->beginTransaction();
+
+        $boardGamesToDatabase = array_merge($syncData["boardGames"]["addedToCollection"] ?? [], $syncData["plays"]["boardGames"] ?? []);
+
+        foreach ($boardGamesToDatabase as $boardGame) {
+            $db->prepare('INSERT INTO BoardGames ("id", "name", "publishYear", "isExpansion", "thumbnail") VALUES (?, ?, ?, ?, ?) ON CONFLICT ON CONSTRAINT bg_pk DO NOTHING')
+                ->execute([$boardGame["id"], $boardGame["name"], $boardGame["publishYear"], $boardGame["isExpansion"] ? "true" : "false", $boardGame["thumbnail"]]);
+        }
 
         // BOARD GAMES ADDED TO COLLECTION
         $query = $db->prepare('
@@ -85,13 +93,9 @@ WHERE ubg."addedToCollectionAt" > ? and ubg."removedFromCollectionAt" is null an
         $responseSyncData["boardGames"]["addedToCollection"] = $diff["client"];
 
         foreach ($diff["db"] as $boardGame) {
-            $db->prepare('INSERT INTO BoardGames ("id", "name", "publishYear", "isExpansion", "thumbnail") VALUES (?, ?, ?, ?, ?) ON CONFLICT ON CONSTRAINT bg_pk DO NOTHING')
-                ->execute([$boardGame["id"], $boardGame["name"], $boardGame["publishYear"], $boardGame["isExpansion"] ? "true" : "false", $boardGame["thumbnail"]]);
-
             $db->prepare('INSERT INTO UserBoardGames ("userId", "boardGameId", "addedToCollectionAt", "removedFromCollectionAt") VALUES (?, ?, ?, null) ON CONFLICT ON CONSTRAINT ubg_pk DO UPDATE SET "addedToCollectionAt" = excluded."addedToCollectionAt", "removedFromCollectionAt" = excluded."removedFromCollectionAt"')
                 ->execute([$userId, $boardGame["id"], $boardGame["updatedAt"]]);
         }
-
 
         // BOARD GAMES REMOVED FROM COLLECTION
         $query = $db->prepare('
@@ -122,6 +126,10 @@ WHERE ubg."removedFromCollectionAt" > ? and ubg."userId" = ? ');
             return $play;
         }, $diff["client"]);
 
+        $boardGameIds = array_map(fn($item) => $item["boardGameId"], $responseSyncData["plays"]["added"]);
+
+        error_log(print_r($boardGameIds, true));
+
         foreach ($diff["db"] as $play) {
             $db->prepare('INSERT INTO UserPlays ("userId", "id", "boardGameId", "date", "playtime", "createdAt", "notes", "players") VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ON CONSTRAINT up_pk DO UPDATE SET "boardGameId" = excluded."boardGameId", "date" = excluded."date", "playtime" = excluded."playtime", "createdAt" = excluded."createdAt", "notes" = excluded."notes", "players" = excluded."players", "deletedAt" = null')
                 ->execute([$userId, $play["id"], $play["boardGameId"], $play["date"], $play["playtime"], $play["createdAt"], $play["notes"], json_encode($play["players"])]);
@@ -138,6 +146,14 @@ WHERE ubg."removedFromCollectionAt" > ? and ubg."userId" = ? ');
         foreach ($diff["db"] as $play) {
             $db->prepare('UPDATE UserPlays SET "deletedAt" = ? WHERE "id" = ? and "userId" = ?')
                 ->execute([$play["deletedAt"], $play["id"], $userId]);
+        }
+
+        // PLAYS BOARD GAMES
+        if (count($boardGameIds) > 0) {
+            $in = str_repeat('?,', count($boardGameIds) - 1) . '?';
+            $query = $db->prepare("SELECT * FROM BoardGames WHERE id IN ($in)");
+            $query->execute($boardGameIds);
+            $responseSyncData["plays"]["boardGames"] = $query->fetchAll();
         }
 
         $db->commit();
