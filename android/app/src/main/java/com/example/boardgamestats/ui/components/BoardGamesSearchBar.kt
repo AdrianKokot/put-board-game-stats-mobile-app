@@ -95,7 +95,7 @@ fun BoardGamesSearchBar(navigateToDetails: (Int) -> Unit) {
                     searchJob = GlobalScope.launch {
                         searchResults =
                             queryXmlApi("https://www.boardgamegeek.com/xmlapi2/search?type=boardgame&query=$text")
-                                .sortedByDescending { it.publishYear }
+//                                .sortedByDescending { it.publishYear }
 
                         if (searchResults.isNotEmpty()) {
                             dao
@@ -151,11 +151,7 @@ fun BoardGamesSearchBar(navigateToDetails: (Int) -> Unit) {
                         } else if (user == null) {
                             IconButton(
                                 onClick = {
-                                    if (false) {
-                                        authLauncher.launch(0)
-                                    } else {
-                                        SyncManager.forceSync()
-                                    }
+                                    authLauncher.launch(0)
                                 }
                             ) {
                                 Icon(
