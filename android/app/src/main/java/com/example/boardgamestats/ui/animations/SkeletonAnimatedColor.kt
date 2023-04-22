@@ -2,6 +2,7 @@ package com.example.boardgamestats.ui.animations
 
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
@@ -10,8 +11,8 @@ fun SkeletonAnimatedColor(): Color {
     val infiniteTransition = rememberInfiniteTransition()
 
     return infiniteTransition.animateColor(
-        initialValue = Color(0.82f, 0.84f, 0.86f, 1f),
-        targetValue = Color(0.82f, 0.84f, 0.86f, 0.5f),
+        initialValue = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+        targetValue = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f),
         animationSpec = infiniteRepeatable(
             repeatMode = RepeatMode.Reverse,
             animation = tween(
