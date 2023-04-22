@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.update
 
 data class SyncState(
     val isSyncing: Boolean = false,
-    val isSyncEnabled: Boolean = false
+    val isSyncEnabled: Boolean = true
 )
 
 data class UserState(
@@ -23,6 +23,18 @@ data class UserState(
 data class UserSettingsState(
     val isSyncEnabled: Boolean = true
 )
+
+fun SyncFinishedCallback(callback: () -> Unit) {
+    ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE) {
+        Log.d(
+            "SyncFinishedCallback",
+            "Sync status changed [Mask: $it, isEmpty: ${ContentResolver.getCurrentSyncs().isEmpty()}]"
+        )
+        if (ContentResolver.getCurrentSyncs().isEmpty()) {
+            callback()
+        }
+    }
+}
 
 class MainViewModel : ViewModel() {
     private val _syncState = MutableStateFlow(SyncState())

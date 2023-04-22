@@ -42,6 +42,7 @@ abstract class BoardGameDatabase : RoomDatabase() {
         fun getDatabase(context: Context): BoardGameDatabase {
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(context, BoardGameDatabase::class.java, "board-game-stats-40")
+                    .enableMultiInstanceInvalidation()
                     .addCallback(seedDatabaseCallback(context))
                     .build()
                     .also { Instance = it }

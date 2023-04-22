@@ -2,9 +2,7 @@ package com.example.boardgamestats.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyItemScope
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.*
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -14,33 +12,46 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.example.boardgamestats.ui.animations.SkeletonAnimatedColor
 
-
 @Composable
 fun <T> LazyNullableList(
     list: List<T>? = null,
+    modifier: Modifier = Modifier,
+    state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
+    placeholderHasImage: Boolean = true,
+    emptyListContent: @Composable (LazyItemScope.() -> Unit) = {},
     itemContent: @Composable LazyItemScope.(T) -> Unit
 ) {
-    LazyColumn(contentPadding = contentPadding, modifier = Modifier.fillMaxHeight()) {
+    LazyColumn(state = state, contentPadding = contentPadding, modifier = modifier.fillMaxSize()) {
         if (list == null) {
             items(5) {
                 ListItem(
                     headlineContent = {
-                        Text("", Modifier.width(160.dp).padding(bottom = 2.dp).background(SkeletonAnimatedColor()))
+                        Text(
+                            "",
+                            Modifier.fillMaxWidth().padding(bottom = 5.dp)
+                                .background(SkeletonAnimatedColor())
+                        )
                     },
                     supportingContent = {
                         Text("", Modifier.width(128.dp).background(SkeletonAnimatedColor()))
                     },
-                    leadingContent = {
-                        Box(
-                            Modifier.width(64.dp).height(64.dp).clip(MaterialTheme.shapes.extraSmall)
-                                .background(SkeletonAnimatedColor())
-                        )
-                    }
+                    leadingContent = if (placeholderHasImage) {
+                        {
+
+
+                            Box(
+                                Modifier.width(64.dp).height(64.dp).clip(MaterialTheme.shapes.extraSmall)
+                                    .background(SkeletonAnimatedColor())
+                            )
+                        }
+                    } else null
                 )
             }
-        } else {
+        } else if (list.isNotEmpty()) {
             items(list, itemContent = itemContent)
+        } else {
+            item(content = emptyListContent)
         }
     }
 }

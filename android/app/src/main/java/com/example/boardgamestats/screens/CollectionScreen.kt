@@ -1,5 +1,6 @@
 package com.example.boardgamestats.screens
 
+import android.app.Application
 import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -15,13 +16,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.boardgamestats.MainActivity
 import com.example.boardgamestats.database.BoardGameDatabase
+import com.example.boardgamestats.models.BoardGame
+import com.example.boardgamestats.models.BoardGameWithPlaysInfo
 import com.example.boardgamestats.ui.components.LazyNullableList
 import com.example.boardgamestats.ui.components.ListItemWithAsyncImage
 import com.example.boardgamestats.ui.components.PullToSyncBox
 import com.example.boardgamestats.ui.extensions.customTabIndicatorOffset
 import com.example.boardgamestats.utils.toDaysAgo
-
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 object CollectionScreenTabs {
     const val GAMES = 0
@@ -30,8 +39,69 @@ object CollectionScreenTabs {
     val titles = listOf("Games", "Expansions")
 }
 
+class CollectionScreenViewModel(application: Application) : AndroidViewModel(application) {
+    private val boardGameDao = BoardGameDatabase.getDatabase(application).boardGameDao()
+
+    private val _games = MutableStateFlow<List<BoardGameWithPlaysInfo>?>(null)
+    val games = _games.asStateFlow()
+
+    private val _expansions = MutableStateFlow<List<BoardGame>?>(null)
+    val expansions = _expansions.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            boardGameDao.getBoardGamesCollectionWithPlayInformation().collect(_games)
+        }
+
+        viewModelScope.launch {
+            boardGameDao.getExpansionsCollection().collect(_expansions)
+        }
+    }
+}
+
 @Composable
-fun CollectionScreenTabs(content: @Composable() ((tab: Int) -> Unit)) {
+fun CollectionScreen(
+    context: Context = LocalContext.current,
+    viewModel: CollectionScreenViewModel = viewModel(context as MainActivity),
+    navigateToDetails: (Int) -> Unit
+) {
+    val games = viewModel.games.collectAsState().value
+    val expansions = viewModel.expansions.collectAsState().value
+
+    CollectionScreenTabs { tab ->
+        PullToSyncBox {
+            when (tab) {
+                CollectionScreenTabs.GAMES -> {
+                    LazyNullableList(games) { item ->
+                        ListItemWithAsyncImage(headlineContent = { Text(item.boardGame.name) },
+                            modifier = Modifier.clickable { navigateToDetails(item.boardGame.id) },
+                            model = item.boardGame.thumbnail,
+                            supportingContent = {
+                                if (item.playsCount > 0) {
+                                    Text("Last played ${item.lastPlay.toDaysAgo(context).lowercase()}")
+                                } else {
+                                    Text("Released in ${item.boardGame.publishYear}")
+                                }
+                            })
+                    }
+                }
+
+                CollectionScreenTabs.EXPANSIONS -> {
+                    LazyNullableList(expansions) { item ->
+                        ListItemWithAsyncImage(headlineContent = { Text(item.name) }, supportingContent = {
+                            Text("Released in ${item.publishYear}")
+                        }, model = item.thumbnail, contentDescription = item.name
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun CollectionScreenTabs(content: @Composable ((tab: Int) -> Unit)) {
     var state by rememberSaveable { mutableStateOf(CollectionScreenTabs.GAMES) }
 
     val density = LocalDensity.current
@@ -64,52 +134,3 @@ fun CollectionScreenTabs(content: @Composable() ((tab: Int) -> Unit)) {
         content(state)
     }
 }
-
-@Composable
-fun CollectionScreen(navigateToDetails: (Int) -> Unit) {
-    CollectionScreenTabs { tab ->
-        PullToSyncBox {
-            when (tab) {
-                CollectionScreenTabs.GAMES -> GamesCollection(navigateToDetails)
-                CollectionScreenTabs.EXPANSIONS -> ExpansionsCollection()
-            }
-        }
-    }
-}
-
-
-@Composable
-fun GamesCollection(
-    navigateToDetails: (Int) -> Unit, context: Context = LocalContext.current
-) {
-    LazyNullableList(
-        BoardGameDatabase.getDatabase(context).boardGameDao().getBoardGamesCollectionWithPlayInformation()
-            .collectAsState(null).value
-    ) {
-        ListItemWithAsyncImage(headlineContent = { Text(it.boardGame.name) },
-            modifier = Modifier.clickable { navigateToDetails(it.boardGame.id) },
-            model = it.boardGame.thumbnail,
-            supportingContent = {
-                if (it.playsCount > 0) {
-                    Text("Last played ${it.lastPlay.toDaysAgo(context).lowercase()}")
-                } else {
-                    Text("Released in ${it.boardGame.publishYear}")
-                }
-            })
-    }
-}
-
-@Composable
-fun ExpansionsCollection() {
-    LazyNullableList(
-        BoardGameDatabase.getDatabase(LocalContext.current).boardGameDao().getExpansionsCollection()
-            .collectAsState(null).value
-    ) { item ->
-        ListItemWithAsyncImage(headlineContent = { Text(item.name) }, supportingContent = {
-            Text("Released in ${item.publishYear}")
-        }, model = item.thumbnail, contentDescription = item.name
-        )
-    }
-}
-
-

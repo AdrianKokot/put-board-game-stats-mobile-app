@@ -1,5 +1,6 @@
 package com.example.boardgamestats.database.daos
 
+import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.boardgamestats.models.BoardGame
 import com.example.boardgamestats.models.BoardGameWithPlaysInfo
