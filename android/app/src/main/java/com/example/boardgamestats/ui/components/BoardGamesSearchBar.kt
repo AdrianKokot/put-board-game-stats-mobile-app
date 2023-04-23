@@ -64,6 +64,7 @@ fun BoardGamesSearchBar(
             val gsa = task?.getResult(ApiException::class.java)
             if (gsa != null) {
                 mainViewModel.fetchUser(gsa.idToken, gsa.photoUrl.toString())
+                mainViewModel.startSync()
             }
         } catch (e: ApiException) {
             Log.d("Error in getAuthLauncher%s", e.toString())

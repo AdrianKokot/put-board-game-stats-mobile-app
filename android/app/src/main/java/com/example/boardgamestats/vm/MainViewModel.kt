@@ -19,7 +19,7 @@ data class UserState(
 )
 
 data class UserSettingsState(
-    val isSyncEnabled: Boolean = false
+    val isSyncEnabled: Boolean = true
 )
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {

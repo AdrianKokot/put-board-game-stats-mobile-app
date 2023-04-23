@@ -14,6 +14,6 @@ interface SettingsDao {
     @Query("UPDATE UserSettings SET isSyncEnabled = :isSyncEnabled WHERE id = 1")
     fun updateUserSettings(isSyncEnabled: Boolean)
 
-    @Query("INSERT OR IGNORE INTO UserSettings(id, isSyncEnabled) VALUES (1, 0)")
+    @Query("INSERT OR IGNORE INTO UserSettings(id, isSyncEnabled) VALUES (1, 1)")
     fun verifySettings()
 }
