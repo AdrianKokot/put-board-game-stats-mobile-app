@@ -1,5 +1,6 @@
 package com.example.boardgamestats.ui.components
 
+import android.content.Context
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.Crossfade
@@ -44,6 +45,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun BoardGamesSearchBar(
     mainViewModel: MainViewModel = viewModel(LocalContext.current as MainActivity),
+    context: Context = LocalContext.current,
     navigateToDetails: (Int) -> Unit,
     navigateToUserSettings: () -> Unit
 ) {
@@ -54,7 +56,7 @@ fun BoardGamesSearchBar(
     var searchResults by rememberSaveable { mutableStateOf(emptyList<BoardGame>()) }
     var isLoading by rememberSaveable { mutableStateOf(false) }
 
-    GoogleSignIn.getLastSignedInAccount(LocalContext.current)?.let {
+    GoogleSignIn.getLastSignedInAccount(context)?.let {
         mainViewModel.fetchUser(it.idToken, it.photoUrl.toString())
     }
 
@@ -82,7 +84,7 @@ fun BoardGamesSearchBar(
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    val dao = BoardGameDatabase.getDatabase(LocalContext.current).boardGameDao()
+    val dao = BoardGameDatabase.getDatabase(context).boardGameDao()
 
     val userIconLoading = @Composable {
         CircularProgressIndicator(
@@ -104,7 +106,7 @@ fun BoardGamesSearchBar(
                     searchJob?.cancel()
                     searchJob = GlobalScope.launch {
 
-                        if (NetworkManager.isInternetAvailable()) {
+                        if (NetworkManager.isNetworkAvailable(context)) {
                             searchResults =
                                 queryXmlApi("https://www.boardgamegeek.com/xmlapi2/search?type=boardgame&query=$text")
 

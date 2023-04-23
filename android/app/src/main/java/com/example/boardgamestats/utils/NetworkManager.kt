@@ -1,21 +1,13 @@
 package com.example.boardgamestats.utils
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.net.InetAddress
+import android.content.Context
+import android.net.ConnectivityManager
 
 class NetworkManager {
     companion object {
-        suspend fun isInternetAvailable(): Boolean {
-            return try {
-                val ipAddr: InetAddress = withContext(Dispatchers.IO) {
-                    InetAddress.getByName("google.com")
-                }
-
-                !ipAddr.equals("")
-            } catch (e: Exception) {
-                false
-            }
+        fun isNetworkAvailable(context: Context): Boolean {
+            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            return connectivityManager.activeNetworkInfo?.isConnected == true
         }
     }
 }

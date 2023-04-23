@@ -5,10 +5,7 @@ import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -72,7 +69,15 @@ fun CollectionScreen(
         PullToSyncBox {
             when (tab) {
                 CollectionScreenTabs.GAMES -> {
-                    LazyNullableList(games) { item ->
+                    LazyNullableList(
+                        games,
+                        emptyListContent = {
+                            Text(
+                                "You have no games in collection",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    ) { item ->
                         ListItemWithAsyncImage(headlineContent = { Text(item.boardGame.name) },
                             modifier = Modifier.clickable { navigateToDetails(item.boardGame.id) },
                             model = item.boardGame.thumbnail,
@@ -87,7 +92,15 @@ fun CollectionScreen(
                 }
 
                 CollectionScreenTabs.EXPANSIONS -> {
-                    LazyNullableList(expansions) { item ->
+                    LazyNullableList(
+                        expansions,
+                        emptyListContent = {
+                            Text(
+                                "You have no expansions in collection",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    ) { item ->
                         ListItemWithAsyncImage(headlineContent = { Text(item.name) }, supportingContent = {
                             Text("Released in ${item.publishYear}")
                         }, model = item.thumbnail, contentDescription = item.name

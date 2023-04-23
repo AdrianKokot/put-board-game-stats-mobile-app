@@ -84,7 +84,7 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
                     })
             }
         ) { padding ->
-            Box(Modifier.padding(padding).fillMaxWidth()) {
+            Box(Modifier.padding(padding).fillMaxSize()) {
                 if (!boardGame.hasDetails) {
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
                 } else {
