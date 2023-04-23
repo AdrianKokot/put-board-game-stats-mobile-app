@@ -30,6 +30,7 @@ import com.example.boardgamestats.api.GoogleApiContract
 import com.example.boardgamestats.api.queryXmlApi
 import com.example.boardgamestats.database.BoardGameDatabase
 import com.example.boardgamestats.models.BoardGame
+import com.example.boardgamestats.utils.NetworkManager
 import com.example.boardgamestats.vm.MainViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
@@ -102,11 +103,17 @@ fun BoardGamesSearchBar(
                     isLoading = true
                     searchJob?.cancel()
                     searchJob = GlobalScope.launch {
-                        searchResults =
-                            queryXmlApi("https://www.boardgamegeek.com/xmlapi2/search?type=boardgame&query=$text")
 
-                        if (searchResults.isNotEmpty()) {
-                            dao.insertAll(*searchResults.toTypedArray())
+                        if (NetworkManager.isInternetAvailable()) {
+                            searchResults =
+                                queryXmlApi("https://www.boardgamegeek.com/xmlapi2/search?type=boardgame&query=$text")
+
+                            if (searchResults.isNotEmpty()) {
+                                dao.insertAll(*searchResults.toTypedArray())
+                            }
+
+                        } else {
+                            searchResults = dao.searchBoardGames(text)
                         }
 
                         isLoading = false
@@ -185,7 +192,7 @@ fun BoardGamesSearchBar(
                 }
 
             }) {
-            Box(modifier = Modifier.fillMaxSize().padding(bottom = 40.dp)) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 if (isLoading) {
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
                 } else if (searchResults.isNotEmpty()) {

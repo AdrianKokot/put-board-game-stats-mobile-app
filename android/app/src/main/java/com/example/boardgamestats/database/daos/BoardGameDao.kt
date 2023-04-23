@@ -47,4 +47,7 @@ interface BoardGameDao {
 
     @Query("UPDATE boardgame SET thumbnail = :thumbnail, image = :image, description = :description, hasDetails = true, isExpansion = :isExpansion WHERE id = :id")
     fun updateDetails(id: Int, thumbnail: String, image: String, description: String, isExpansion: Boolean)
+
+    @Query("SELECT * FROM boardgame WHERE name LIKE '%' || :text || '%'")
+    fun searchBoardGames(text: String): List<BoardGame>
 }
