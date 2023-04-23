@@ -150,7 +150,7 @@ interface SyncDao {
         )
     }
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertBoardGame(vararg boardGame: BoardGame)
 
     @Query("UPDATE boardgame SET inCollection = :inCollection, updatedAt = :updatedAt WHERE id = :id")

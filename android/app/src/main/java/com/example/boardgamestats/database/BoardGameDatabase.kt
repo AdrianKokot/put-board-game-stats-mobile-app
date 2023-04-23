@@ -6,14 +6,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.boardgamestats.database.daos.*
-import com.example.boardgamestats.models.BoardGame
-import com.example.boardgamestats.models.Gameplay
-import com.example.boardgamestats.models.Player
-import com.example.boardgamestats.models.PlayerWithScore
+import com.example.boardgamestats.models.*
 import java.util.concurrent.Executors
 
 @Database(
-    entities = [BoardGame::class, Player::class, Gameplay::class, PlayerWithScore::class, SyncInfo::class],
+    entities = [BoardGame::class, Player::class, Gameplay::class, PlayerWithScore::class, SyncInfo::class, UserSettings::class],
     version = 1,
     exportSchema = false
 )
@@ -22,6 +19,7 @@ abstract class BoardGameDatabase : RoomDatabase() {
     abstract fun playerDao(): PlayerDao
     abstract fun gameplayDao(): GameplayDao
     abstract fun syncDao(): SyncDao
+    abstract fun settingsDao(): SettingsDao
 
     companion object {
         @Volatile
@@ -33,7 +31,9 @@ abstract class BoardGameDatabase : RoomDatabase() {
                     super.onCreate(db)
 
                     Executors.newSingleThreadExecutor().execute {
-                        getDatabase(context).syncDao().verifySyncInfo()
+                        val database = getDatabase(context)
+                        database.syncDao().verifySyncInfo()
+                        database.settingsDao().verifySettings()
                     }
                 }
             }
@@ -41,7 +41,7 @@ abstract class BoardGameDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): BoardGameDatabase {
             return Instance ?: synchronized(this) {
-                Room.databaseBuilder(context, BoardGameDatabase::class.java, "board-game-stats-40")
+                Room.databaseBuilder(context, BoardGameDatabase::class.java, "board-game-stats-53")
                     .enableMultiInstanceInvalidation()
                     .addCallback(seedDatabaseCallback(context))
                     .build()

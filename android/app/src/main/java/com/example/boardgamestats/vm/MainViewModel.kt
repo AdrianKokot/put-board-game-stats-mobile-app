@@ -1,42 +1,28 @@
 package com.example.boardgamestats.vm
 
+import android.app.Application
 import android.content.ContentResolver
 import android.util.Log
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.boardgamestats.database.BoardGameDatabase
 import com.example.boardgamestats.sync.SyncManager
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 data class SyncState(
-    val isSyncing: Boolean = false,
-    val isSyncEnabled: Boolean = true
+    val isSyncing: Boolean = false, val isSyncEnabled: Boolean = true
 )
 
 data class UserState(
-    val isUserLoggedIn: Boolean = false,
-    val photoUrl: String? = null,
-    val idToken: String? = null
+    val isUserLoggedIn: Boolean = true, val photoUrl: String? = null, val idToken: String? = null
 )
 
 data class UserSettingsState(
     val isSyncEnabled: Boolean = true
 )
 
-fun SyncFinishedCallback(callback: () -> Unit) {
-    ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE) {
-        Log.d(
-            "SyncFinishedCallback",
-            "Sync status changed [Mask: $it, isEmpty: ${ContentResolver.getCurrentSyncs().isEmpty()}]"
-        )
-        if (ContentResolver.getCurrentSyncs().isEmpty()) {
-            callback()
-        }
-    }
-}
-
-class MainViewModel : ViewModel() {
+class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _syncState = MutableStateFlow(SyncState())
     private val _userState = MutableStateFlow(UserState())
     private val _userSettingsState = MutableStateFlow(UserSettingsState())
@@ -46,6 +32,19 @@ class MainViewModel : ViewModel() {
     val userSettingsState: StateFlow<UserSettingsState> = _userSettingsState.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            BoardGameDatabase.getDatabase(application).settingsDao().getUserSettings().filterNotNull()
+                .collect { userSettings ->
+                    _userSettingsState.update { currentState ->
+                        currentState.copy(isSyncEnabled = userSettings.isSyncEnabled)
+                    }
+
+                    _syncState.update { currentState ->
+                        currentState.copy(isSyncEnabled = _userState.value.isUserLoggedIn && userSettings.isSyncEnabled)
+                    }
+                }
+        }
+
         ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE) {
             Log.d(
                 "MainViewModel",
@@ -71,9 +70,7 @@ class MainViewModel : ViewModel() {
     fun fetchUser(idToken: String?, photoUrl: String?) {
         _userState.update {
             it.copy(
-                isUserLoggedIn = idToken != null,
-                photoUrl = photoUrl,
-                idToken = idToken
+                isUserLoggedIn = idToken != null, photoUrl = photoUrl, idToken = idToken
             )
         }
         _syncState.update {
