@@ -10,12 +10,14 @@ import androidx.navigation.navigation
 import com.example.boardgamestats.screens.CollectionScreen
 import com.example.boardgamestats.screens.MainScreen
 import com.example.boardgamestats.screens.PlayedGamesScreen
+import com.example.boardgamestats.screens.UserSettingsScreen
 
 object MainNavigation {
     const val RootRoute = "MainNavigation_RootRoute"
     const val MainScreen = "MainNavigation_MainScreen"
     const val GameListScreen = "MainNavigation_GameListScreen"
     const val GameplayListScreen = "MainNavigation_GameplayListScreen"
+    const val UserSettingsScreen = "MainNavigation_UserSettingsScreen"
 }
 
 fun NavGraphBuilder.MainNavigationGraph(navController: NavHostController) {
@@ -24,6 +26,9 @@ fun NavGraphBuilder.MainNavigationGraph(navController: NavHostController) {
             MainNavigation.MainScreen
         ) {
             MainScreen(navController)
+        }
+        composable(MainNavigation.UserSettingsScreen) {
+            UserSettingsScreen(navController = navController)
         }
     }
 }

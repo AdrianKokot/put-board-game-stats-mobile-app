@@ -10,6 +10,7 @@ interface SettingsDao {
     @Query("SELECT * FROM UserSettings WHERE id = 1")
     fun getUserSettings(): Flow<UserSettings>
 
+
     @Query("UPDATE UserSettings SET isSyncEnabled = :isSyncEnabled WHERE id = 1")
     fun updateUserSettings(isSyncEnabled: Boolean)
 

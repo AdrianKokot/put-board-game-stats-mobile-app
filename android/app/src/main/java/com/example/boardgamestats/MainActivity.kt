@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.rememberNavController
 import com.example.boardgamestats.navigation.RootNavigationGraph
+import com.example.boardgamestats.screens.UserSettingsScreen
 import com.example.boardgamestats.sync.SyncManager
 import com.example.boardgamestats.ui.theme.BoardGameStatsTheme
 

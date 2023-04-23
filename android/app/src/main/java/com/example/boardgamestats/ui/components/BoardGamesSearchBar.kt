@@ -30,7 +30,6 @@ import com.example.boardgamestats.api.GoogleApiContract
 import com.example.boardgamestats.api.queryXmlApi
 import com.example.boardgamestats.database.BoardGameDatabase
 import com.example.boardgamestats.models.BoardGame
-import com.example.boardgamestats.sync.SyncManager
 import com.example.boardgamestats.vm.MainViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
@@ -44,7 +43,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun BoardGamesSearchBar(
     mainViewModel: MainViewModel = viewModel(LocalContext.current as MainActivity),
-    navigateToDetails: (Int) -> Unit
+    navigateToDetails: (Int) -> Unit,
+    navigateToUserSettings: () -> Unit
 ) {
     var text by rememberSaveable { mutableStateOf("") }
     var previousText by rememberSaveable { mutableStateOf("") }
@@ -57,7 +57,7 @@ fun BoardGamesSearchBar(
         mainViewModel.fetchUser(it.idToken, it.photoUrl.toString())
     }
 
-    val user = mainViewModel.userState.collectAsState().value
+    val user = mainViewModel.userState.collectAsState(null).value
 
     val authLauncher = rememberLauncherForActivityResult(contract = GoogleApiContract()) { task ->
         try {
@@ -83,7 +83,11 @@ fun BoardGamesSearchBar(
     val dao = BoardGameDatabase.getDatabase(LocalContext.current).boardGameDao()
 
     val userIconLoading = @Composable {
-        CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 3.dp, color = MaterialTheme.colorScheme.onPrimaryContainer)
+        CircularProgressIndicator(
+            Modifier.size(20.dp),
+            strokeWidth = 3.dp,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     }
 
     Box(Modifier.fillMaxWidth().zIndex(3f).padding(bottom = 8.dp)) {
@@ -146,7 +150,7 @@ fun BoardGamesSearchBar(
             trailingIcon = {
                 Crossfade(targetState = !active) {
                     if (it) {
-                        if (!user.isUserLoggedIn) {
+                        if (user == null || !user.isUserLoggedIn) {
                             IconButton(onClick = {
                                 authLauncher.launch(0)
                             }) {
@@ -155,9 +159,7 @@ fun BoardGamesSearchBar(
                                 )
                             }
                         } else {
-                            IconButton(onClick = {
-                                SyncManager.forceSync()
-                            }) {
+                            IconButton(onClick = navigateToUserSettings) {
                                 SubcomposeAsyncImage(modifier = Modifier.size(32.dp)
                                     .clip(MaterialTheme.shapes.extraLarge),
                                     model = user.photoUrl,

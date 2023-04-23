@@ -10,6 +10,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.boardgamestats.navigation.BottomNavigationGraph
 import com.example.boardgamestats.navigation.GameNavigation
+import com.example.boardgamestats.navigation.MainNavigation
 import com.example.boardgamestats.ui.components.BoardGamesSearchBar
 import com.example.boardgamestats.ui.components.BottomNavigationBar
 
@@ -22,9 +23,14 @@ fun MainScreen(rootNavController: NavController) {
             BottomNavigationBar(navController)
         },
         topBar = {
-            BoardGamesSearchBar {
-                rootNavController.navigate(GameNavigation.detailsScreen(it))
-            }
+            BoardGamesSearchBar(
+                navigateToDetails = {
+                    rootNavController.navigate(GameNavigation.detailsScreen(it))
+                },
+                navigateToUserSettings = {
+                    rootNavController.navigate(MainNavigation.UserSettingsScreen)
+                }
+            )
         }
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {

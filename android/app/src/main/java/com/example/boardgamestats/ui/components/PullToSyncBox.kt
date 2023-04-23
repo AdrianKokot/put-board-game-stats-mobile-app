@@ -1,5 +1,6 @@
 package com.example.boardgamestats.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.material.ExperimentalMaterialApi
@@ -22,20 +23,24 @@ fun PullToSyncBox(
     mainViewModel: MainViewModel = viewModel((LocalContext.current as MainActivity)),
     content: @Composable (BoxScope.() -> Unit),
 ) {
-    val syncState = mainViewModel.syncState.collectAsState().value
+    mainViewModel.syncState.collectAsState(null).value?.let { syncState ->
 
-    val state = rememberPullRefreshState(syncState.isSyncing, onRefresh = {
-        mainViewModel.startSync()
-    })
 
-    Box(Modifier.pullRefresh(state, enabled = syncState.isSyncEnabled)) {
-        content(this)
+        val state = rememberPullRefreshState(syncState.isSyncing, onRefresh = {
+            mainViewModel.startSync()
+        })
 
-        PullRefreshIndicator(
-            syncState.isSyncing, state,
-            Modifier.align(Alignment.TopCenter),
-            backgroundColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.primary
-        )
+        Log.d("PullToSyncBox", "state: ${syncState}")
+
+        Box(Modifier.pullRefresh(state, enabled = syncState.isSyncEnabled)) {
+            content(this)
+
+            PullRefreshIndicator(
+                syncState.isSyncing, state,
+                Modifier.align(Alignment.TopCenter),
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }

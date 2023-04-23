@@ -15,14 +15,16 @@ data class SyncState(
 )
 
 data class UserState(
-    val isUserLoggedIn: Boolean = true, val photoUrl: String? = null, val idToken: String? = null
+    val isUserLoggedIn: Boolean = false, val photoUrl: String? = null, val idToken: String? = null
 )
 
 data class UserSettingsState(
-    val isSyncEnabled: Boolean = true
+    val isSyncEnabled: Boolean = false
 )
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
+    private val _database = BoardGameDatabase.getDatabase(application)
+    private val _settingsDao = _database.settingsDao()
     private val _syncState = MutableStateFlow(SyncState())
     private val _userState = MutableStateFlow(UserState())
     private val _userSettingsState = MutableStateFlow(UserSettingsState())
@@ -33,16 +35,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         viewModelScope.launch {
-            BoardGameDatabase.getDatabase(application).settingsDao().getUserSettings().filterNotNull()
-                .collect { userSettings ->
-                    _userSettingsState.update { currentState ->
-                        currentState.copy(isSyncEnabled = userSettings.isSyncEnabled)
-                    }
-
-                    _syncState.update { currentState ->
-                        currentState.copy(isSyncEnabled = _userState.value.isUserLoggedIn && userSettings.isSyncEnabled)
-                    }
-                }
+            _settingsDao.getUserSettings().filterNotNull().collect { settings ->
+                updateUserSettingsSate(settings.isSyncEnabled)
+            }
         }
 
         ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE) {
@@ -75,6 +70,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         _syncState.update {
             it.copy(isSyncEnabled = idToken != null && _userSettingsState.value.isSyncEnabled)
+        }
+    }
+
+    private fun updateUserSettingsSate(isSyncEnabled: Boolean) {
+        _userSettingsState.update { currentState ->
+            currentState.copy(isSyncEnabled = isSyncEnabled)
+        }
+
+        _syncState.update { currentState ->
+            currentState.copy(isSyncEnabled = _userState.value.isUserLoggedIn && isSyncEnabled)
         }
     }
 }
