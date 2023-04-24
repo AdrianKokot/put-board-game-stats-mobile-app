@@ -4,11 +4,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 
 
@@ -18,7 +15,7 @@ fun TextFieldWithDropdown(
     modifier: Modifier = Modifier,
     options: List<String>,
     value: String = "",
-    label: @Composable() (() -> Unit)?,
+    label: @Composable (() -> Unit)?,
     onValueChange: ((String) -> Unit)?,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -27,14 +24,14 @@ fun TextFieldWithDropdown(
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     var selectedOptionText by rememberSaveable { mutableStateOf(value) }
+    val filteringOptions = options.filter { it.contains(selectedOptionText, ignoreCase = true) }
+    val isActuallyExpanded = expanded && filteringOptions.isNotEmpty()
 
     ExposedDropdownMenuBox(
         modifier = modifier,
-        expanded = expanded,
+        expanded = isActuallyExpanded,
         onExpandedChange = { expanded = !expanded },
     ) {
-        val filteringOptions = options.filter { it.contains(selectedOptionText, ignoreCase = true) }
-
         TextField(
             maxLines = 1,
             modifier = Modifier.fillMaxWidth().menuAnchor(),
@@ -53,22 +50,20 @@ fun TextFieldWithDropdown(
             supportingText = supportingText
         )
 
-        if (filteringOptions.isNotEmpty()) {
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-            ) {
-                filteringOptions.forEach { selectionOption ->
-                    DropdownMenuItem(
-                        text = { Text(selectionOption) },
-                        onClick = {
-                            selectedOptionText = selectionOption
-                            onValueChange?.invoke(selectedOptionText)
-                            expanded = false
-                        },
-                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                    )
-                }
+        ExposedDropdownMenu(
+            expanded = isActuallyExpanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            filteringOptions.forEach { selectionOption ->
+                DropdownMenuItem(
+                    text = { Text(selectionOption) },
+                    onClick = {
+                        selectedOptionText = selectionOption
+                        onValueChange?.invoke(selectedOptionText)
+                        expanded = false
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                )
             }
         }
     }

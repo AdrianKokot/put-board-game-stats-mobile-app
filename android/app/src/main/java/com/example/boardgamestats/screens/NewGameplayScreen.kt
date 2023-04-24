@@ -1,5 +1,6 @@
 package com.example.boardgamestats.screens
 
+import android.content.Context
 import android.text.format.DateFormat
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -30,14 +31,15 @@ import com.example.boardgamestats.utils.toTimeString
 import kotlinx.coroutines.launch
 import java.time.Instant
 
-data class GameplayPlayer(var name: String, var score: String)
+data class GameplayPlayer(var name: String, var score: String, val id: Int = 0)
 
 class NewGamePlayViewModel : ViewModel() {
-    private val _players = mutableStateListOf(GameplayPlayer("", ""))
+    private var _id = 0
+    private val _players = mutableStateListOf(GameplayPlayer(id = _id++, name = "", score = ""))
     val players: List<GameplayPlayer> = _players
 
     fun addPlayer(player: GameplayPlayer) {
-        _players.add(player)
+        _players.add(player.copy(id = _id++))
     }
 
     fun removePlayer(player: GameplayPlayer) {
@@ -54,14 +56,14 @@ class NewGamePlayViewModel : ViewModel() {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun NewGameplayScreen(
+fun NewGameplayScreen(context: Context = LocalContext.current,
     popBackStack: () -> Unit, gameId: Int, newGamePlayViewModel: NewGamePlayViewModel = viewModel()
 ) {
-    val dao = BoardGameDatabase.getDatabase(LocalContext.current).playerDao()
-    val gameplayDao = BoardGameDatabase.getDatabase(LocalContext.current).gameplayDao()
+    val database = remember { BoardGameDatabase.getDatabase(context) }
+    val dao = remember { database.playerDao() }
+    val gameplayDao = remember { database.gameplayDao() }
 
     var openDialog by rememberSaveable { mutableStateOf(false) }
-
     var dateInstant by rememberSaveable { mutableStateOf(Instant.now().toEpochMilli()) }
     val datePickerState = rememberDatePickerState(dateInstant)
 
@@ -197,7 +199,7 @@ fun NewGameplayScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         TextField(
-                            value = DateFormat.getDateFormat(LocalContext.current).format(dateInstant),
+                            value = DateFormat.getDateFormat(context).format(dateInstant),
                             readOnly = true,
                             enabled = false,
                             colors = textFieldColors,
@@ -265,7 +267,7 @@ fun NewGameplayScreen(
                     }
                 }
 
-                itemsIndexed(players) { index, player ->
+                itemsIndexed(players, key = { _, player -> player.id }) { index, player ->
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 16.dp),
                         verticalAlignment = Alignment.Top,
@@ -296,7 +298,6 @@ fun NewGameplayScreen(
 
                         TextFieldWithDropdown(
                             label = { Text("Name") },
-                            value = player.name,
                             onValueChange = {
                                 newGamePlayViewModel.updatePlayer(index, newName = it)
                             },
@@ -308,7 +309,7 @@ fun NewGameplayScreen(
                                 imeAction = if (players.size - 1 == index) ImeAction.Done else ImeAction.Next
                             ),
                             isError = invalidName,
-                            supportingText = if (invalidScore) {
+                            supportingText = if (invalidName) {
                                 { Text("Name is required") }
                             } else null
                         )

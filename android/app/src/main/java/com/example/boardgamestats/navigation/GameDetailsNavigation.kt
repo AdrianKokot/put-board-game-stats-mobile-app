@@ -39,7 +39,7 @@ fun NavGraphBuilder.GameNavigationGraph(navController: NavHostController) {
             it.arguments?.getInt("gameId")?.let { gameId ->
                 NewGameplayScreen(popBackStack = {
                     navController.popBackStack()
-                }, gameId)
+                }, gameId = gameId)
             }
         }
 
