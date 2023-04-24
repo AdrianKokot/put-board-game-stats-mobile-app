@@ -1,5 +1,6 @@
 package com.example.boardgamestats.screens
 
+import android.content.Context
 import android.text.Html
 import android.text.format.DateFormat
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -31,16 +32,22 @@ import com.example.boardgamestats.ui.animations.SkeletonAnimatedColor
 import com.example.boardgamestats.ui.components.ExpandableText
 import com.example.boardgamestats.ui.components.GameplayStatisticsOverview
 import com.example.boardgamestats.ui.components.SectionTitle
+import com.example.boardgamestats.utils.NetworkManager
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavHostController) {
-    val db = BoardGameDatabase.getDatabase(LocalContext.current)
+fun GameDetailsScreen(
+    popBackStack: () -> Unit,
+    gameId: Int,
+    navController: NavHostController,
+    context: Context = LocalContext.current
+) {
+    val db = BoardGameDatabase.getDatabase(context)
     val boardGameDao = db.boardGameDao()
-    val formatter = DateFormat.getDateFormat(LocalContext.current)
+    val formatter = DateFormat.getDateFormat(context)
 
     val gameplayDao = db.gameplayDao()
 
@@ -57,9 +64,12 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
 
     boardGameDao.get(gameId).collectAsState(null).value?.let { boardGame ->
         if (boardGameDetailsJob == null && !boardGame.hasDetails) {
-            boardGameDetailsJob = GlobalScope.launch {
-                queryXmlApi("https://www.boardgamegeek.com/xmlapi2/thing?id=$gameId").first().let {
-                    boardGameDao.updateDetails(it.id, it.thumbnail!!, it.image!!, it.description!!, it.isExpansion)
+            if (NetworkManager.isNetworkAvailable(context)) {
+
+                boardGameDetailsJob = GlobalScope.launch {
+                    queryXmlApi("https://www.boardgamegeek.com/xmlapi2/thing?id=$gameId").first().let {
+                        boardGameDao.updateDetails(it.id, it.thumbnail!!, it.image!!, it.description!!, it.isExpansion)
+                    }
                 }
             }
         }
@@ -83,7 +93,17 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
         ) { padding ->
             Box(Modifier.padding(padding).fillMaxSize()) {
                 if (!boardGame.hasDetails) {
-                    CircularProgressIndicator(Modifier.align(Alignment.Center))
+                    if (NetworkManager.isNetworkAvailable(context)) {
+                        CircularProgressIndicator(Modifier.align(Alignment.Center))
+                    } else {
+                        Text(
+                            "No internet connection",
+                            modifier = Modifier.align(Alignment.Center),
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        )
+                    }
                 } else {
                     val plays = gameplayDao.getAllForGame(gameId).collectAsState(emptyList()).value
                     val stats = boardGameDao.getBoardGamePlaysStats(gameId).collectAsState(null).value
