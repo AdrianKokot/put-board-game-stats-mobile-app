@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.boardgamestats.database.BoardGameDatabase
 import com.example.boardgamestats.navigation.GameNavigation
+import com.example.boardgamestats.ui.components.SectionTitle
 import com.example.boardgamestats.utils.toTimeString
 import kotlinx.coroutines.launch
 

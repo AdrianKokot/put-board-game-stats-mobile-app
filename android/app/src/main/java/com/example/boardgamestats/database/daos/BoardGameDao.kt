@@ -3,7 +3,9 @@ package com.example.boardgamestats.database.daos
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.boardgamestats.models.BoardGame
+import com.example.boardgamestats.models.BoardGameStats
 import com.example.boardgamestats.models.BoardGameWithPlaysInfo
+import com.example.boardgamestats.models.PlayerStats
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -50,4 +52,12 @@ interface BoardGameDao {
 
     @Query("SELECT * FROM boardgame WHERE hasDetails = true and name LIKE '%' || :text || '%'")
     fun searchBoardGames(text: String): List<BoardGame>
+
+    @Query("SELECT * FROM (SELECT max(p.score) as highestScore, min(p.score) as lowestScore, round(avg(p.score), 0) as avgScore FROM Gameplay as g JOIN PlayerWithScore as p ON g.id = p.gameplayId WHERE g.boardGameId = :boardGameId) as g JOIN (SELECT count(id) as playsCount, max(date) as lastPlay, round(avg(playtime), 0) as avgPlaytime FROM Gameplay WHERE boardGameId = :boardGameId) as g2")
+    fun getBoardGamePlaysStats(boardGameId: Int): Flow<BoardGameStats>
+
+    @Query("SELECT p.playerName as name, max(p.score) as highestScore, count(*) as playCount, count(CASE WHEN p.score = g.winScore THEN 1 END) as winCount FROM \n" +
+            "(SELECT g.*, max(p.score) as winScore FROM Gameplay as g JOIN PlayerWithScore as p ON g.id = p.gameplayId WHERE g.boardGameId = :boardGameId GROUP BY g.id) as g JOIN PlayerWithScore as p ON g.id = p.gameplayId GROUP BY p.playerName ORDER BY p.playerName ASC")
+    fun getBoardGamePlayerStats(boardGameId: Int): Flow<List<PlayerStats>>
 }
+

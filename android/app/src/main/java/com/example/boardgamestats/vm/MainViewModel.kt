@@ -15,7 +15,7 @@ data class SyncState(
 )
 
 data class UserState(
-    val isUserLoggedIn: Boolean = false, val photoUrl: String? = null, val idToken: String? = null
+    val isUserLoggedIn: Boolean = true, val photoUrl: String? = null, val idToken: String? = null
 )
 
 data class UserSettingsState(

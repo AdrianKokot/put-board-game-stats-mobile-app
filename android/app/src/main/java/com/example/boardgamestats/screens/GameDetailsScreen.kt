@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,20 +20,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.SubcomposeAsyncImage
 import com.example.boardgamestats.api.queryXmlApi
 import com.example.boardgamestats.database.BoardGameDatabase
-import com.example.boardgamestats.models.GameplayWithPlayers
 import com.example.boardgamestats.navigation.GameNavigation
 import com.example.boardgamestats.ui.animations.SkeletonAnimatedColor
 import com.example.boardgamestats.ui.components.ExpandableText
-import com.example.boardgamestats.utils.toDaysAgo
-import com.example.boardgamestats.utils.toTimeString
+import com.example.boardgamestats.ui.components.GameplayStatisticsOverview
+import com.example.boardgamestats.ui.components.SectionTitle
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -54,7 +50,8 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
     val topAppBarState = rememberTopAppBarState()
     val isScrollable by remember { derivedStateOf { lazyListState.canScrollForward || topAppBarState.collapsedFraction > 0 } }
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState, canScroll = { isScrollable })
+    val scrollBehavior =
+        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState, canScroll = { isScrollable })
 
     val scope = rememberCoroutineScope()
 
@@ -89,6 +86,7 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
                 } else {
                     val plays = gameplayDao.getAllForGame(gameId).collectAsState(emptyList()).value
+                    val stats = boardGameDao.getBoardGamePlaysStats(gameId).collectAsState(null).value
                     LazyColumn(state = lazyListState) {
                         item {
                             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -143,10 +141,11 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
                                     modifier = Modifier.padding(horizontal = 16.dp),
                                     title = "Statistics",
                                     onArrowClick = {
-
-                                    })
-                                GameplayStatisticsOverview(plays = plays)
-                                Spacer(modifier = Modifier.height(56.dp))
+                                        navController.navigate(GameNavigation.gameplayStatsScreen(gameId))
+                                    }
+                                )
+                                GameplayStatisticsOverview(stats)
+                                Spacer(modifier = Modifier.height(32.dp))
                             }
 
                             stickyHeader {
@@ -185,94 +184,3 @@ fun GameDetailsScreen(popBackStack: () -> Unit, gameId: Int, navController: NavH
     }
 }
 
-@Composable
-fun GameplayStatisticsOverview(
-    plays: List<GameplayWithPlayers>,
-    gridTitleTextStyle: TextStyle = MaterialTheme.typography.titleMedium,
-    gridLabelTextStyle: TextStyle = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
-) {
-    val context = LocalContext.current
-
-    if (plays.isEmpty()) {
-        return
-    }
-
-    val statistics by remember {
-        derivedStateOf {
-            listOf(
-                listOf(
-                    "Highest score" to plays.flatMap { it.playerResults }.maxByOrNull { it.score }?.score.toString(),
-                    "Avg score" to plays.flatMap { it.playerResults }.map { it.score }.average().toInt().toString(),
-                    "Lowest score" to plays.flatMap { it.playerResults }.minByOrNull { it.score }?.score.toString()
-                ),
-                listOf(
-                    "Last played" to plays.maxByOrNull { it.gameplay.date }!!.gameplay.date.toDaysAgo(context),
-                    "Avg playtime" to plays.mapNotNull { it.gameplay.playtime }
-                        .filter { it > 0 }
-                        .average()
-                        .let { if (it.isNaN()) "No data" else it.toLong().toTimeString() },
-                    "Total plays" to plays.size.toString()
-                )
-            )
-        }
-    }
-
-    statistics.forEach { list ->
-        Row(
-            modifier = Modifier.fillMaxWidth()
-                .padding(top = gridTitleTextStyle.lineHeight.value.dp),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            list.forEach { pair ->
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        pair.second,
-                        style = gridTitleTextStyle
-                    )
-                    Text(
-                        pair.first,
-                        style = gridLabelTextStyle
-                            .copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun SectionTitle(
-    modifier: Modifier = Modifier,
-    textStyle: TextStyle = MaterialTheme.typography.titleLarge,
-    title: String,
-    onArrowClick: (() -> Unit)? = null
-) {
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Text(
-            title,
-            style = textStyle
-        )
-
-        if (onArrowClick != null) {
-            IconButton(
-                onClick = onArrowClick,
-                modifier = Modifier.size(textStyle.lineHeight.value.dp),
-            ) {
-                Icon(
-                    Icons.Default.ArrowForward,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    contentDescription = null,
-                    modifier = Modifier.size(textStyle.fontSize.value.dp)
-                )
-            }
-        }
-    }
-}
