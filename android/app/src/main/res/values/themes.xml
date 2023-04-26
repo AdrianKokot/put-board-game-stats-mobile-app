@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.BoardGameStats" parent="android:Theme.Material.Light.NoActionBar"/>
+    <style name="Theme.BoardGameStats" parent="android:Theme.Material"/>
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="postSplashScreenTheme" value="@style/Theme.BoardGameStats"/>
+    </style>
 </resources>
