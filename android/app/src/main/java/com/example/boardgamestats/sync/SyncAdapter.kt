@@ -28,7 +28,7 @@ class SyncAdapter(private val context: Context, autoInitialize: Boolean) :
     override fun onPerformSync(p0: Account?, p1: Bundle?, p2: String?, p3: ContentProviderClient?, p4: SyncResult?) {
         val syncDao = BoardGameDatabase.getDatabase(context).syncDao()
 
-        val token = GoogleSignIn.getLastSignedInAccount(context)?.idToken ?: "test";
+        val token = GoogleSignIn.getLastSignedInAccount(context)?.idToken ?: return
 
         val json = buildJsonObject {
             put("idToken", token)

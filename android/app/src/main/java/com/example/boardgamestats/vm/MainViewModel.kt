@@ -11,11 +11,11 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class SyncState(
-    val isSyncing: Boolean = false, val isSyncEnabled: Boolean = true
+    val isSyncing: Boolean = false, val isSyncEnabled: Boolean = false
 )
 
 data class UserState(
-    val isUserLoggedIn: Boolean = true, val photoUrl: String? = null, val idToken: String? = null
+    val isUserLoggedIn: Boolean = false, val photoUrl: String? = null, val idToken: String? = null
 )
 
 data class UserSettingsState(
