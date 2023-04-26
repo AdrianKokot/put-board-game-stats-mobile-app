@@ -43,7 +43,7 @@ fun PlayedGamesScreen(
     navigateToGameplayDetails: (Int) -> Unit
 ) {
     PullToSyncBox {
-        LazyNullableList(viewModel.plays.collectAsState().value) { item ->
+        LazyNullableList(viewModel.plays.collectAsState().value, emptyListContent = {Text("You have no plays")}) { item ->
             ListItemWithAsyncImage(
                 headlineContent = { Text(item.boardGame.name) },
                 supportingContent = { Text(item.gameplay.date.toDaysAgo(context)) },
