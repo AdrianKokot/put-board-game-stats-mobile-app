@@ -1,5 +1,6 @@
 package com.example.boardgamestats.ui.components
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
@@ -29,7 +30,7 @@ fun ExpandableText(
         onTextLayout = {
             didOverflow = it.didOverflowHeight
         },
-        modifier = modifier.clickable(enabled = didOverflow || isExpanded) { isExpanded = !isExpanded },
+        modifier = modifier.animateContentSize().clickable(enabled = didOverflow || isExpanded) { isExpanded = !isExpanded },
         style = style
     )
 }
