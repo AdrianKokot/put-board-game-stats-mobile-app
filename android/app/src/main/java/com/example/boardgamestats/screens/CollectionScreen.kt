@@ -69,15 +69,11 @@ fun CollectionScreen(
         PullToSyncBox {
             when (tab) {
                 CollectionScreenTabs.GAMES -> {
-                    LazyNullableList(
-                        games,
-                        emptyListContent = {
-                            Text(
-                                "You have no games in collection",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    ) { item ->
+                    LazyNullableList(games, emptyListContent = {
+                        Text(
+                            "You have no games in collection", color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }) { item ->
                         ListItemWithAsyncImage(headlineContent = { Text(item.boardGame.name) },
                             modifier = Modifier.clickable { navigateToDetails(item.boardGame.id) },
                             model = item.boardGame.thumbnail,
@@ -92,18 +88,19 @@ fun CollectionScreen(
                 }
 
                 CollectionScreenTabs.EXPANSIONS -> {
-                    LazyNullableList(
-                        expansions,
-                        emptyListContent = {
-                            Text(
-                                "You have no expansions in collection",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    ) { item ->
-                        ListItemWithAsyncImage(headlineContent = { Text(item.name) }, supportingContent = {
-                            Text("Released in ${item.publishYear}")
-                        }, model = item.thumbnail, contentDescription = item.name
+                    LazyNullableList(expansions, emptyListContent = {
+                        Text(
+                            "You have no expansions in collection",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }) { item ->
+                        ListItemWithAsyncImage(headlineContent = { Text(item.name) },
+                            modifier = Modifier.clickable { navigateToDetails(item.id) },
+                            supportingContent = {
+                                Text("Released in ${item.publishYear}")
+                            },
+                            model = item.thumbnail,
+                            contentDescription = item.name
                         )
                     }
                 }

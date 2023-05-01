@@ -40,10 +40,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun GameDetailsScreen(
-    popBackStack: () -> Unit,
-    gameId: Int,
-    navController: NavHostController,
-    context: Context = LocalContext.current
+    popBackStack: () -> Unit, gameId: Int, navController: NavHostController, context: Context = LocalContext.current
 ) {
     val db = BoardGameDatabase.getDatabase(context)
     val boardGameDao = db.boardGameDao()
@@ -74,23 +71,17 @@ fun GameDetailsScreen(
             }
         }
 
-        Scaffold(
-            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-            topBar = {
-                MediumTopAppBar(
-                    scrollBehavior = scrollBehavior,
-                    title = {
-                        Text(
-                            boardGame.name, maxLines = 1, overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = popBackStack) {
-                            Icon(Icons.Filled.ArrowBack, contentDescription = null)
-                        }
-                    })
-            }
-        ) { padding ->
+        Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
+            MediumTopAppBar(scrollBehavior = scrollBehavior, title = {
+                Text(
+                    boardGame.name, maxLines = 1, overflow = TextOverflow.Ellipsis
+                )
+            }, navigationIcon = {
+                IconButton(onClick = popBackStack) {
+                    Icon(Icons.Filled.ArrowBack, contentDescription = null)
+                }
+            })
+        }) { padding ->
             Box(Modifier.padding(padding).fillMaxSize()) {
                 if (!boardGame.hasDetails) {
                     if (NetworkManager.isNetworkAvailable(context)) {
@@ -132,23 +123,20 @@ fun GameDetailsScreen(
                                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                OutlinedButton(
-                                    onClick = {
-                                        scope.launch {
-                                            boardGameDao.updateCollection(gameId, !boardGame.inCollection)
-                                        }
+                                OutlinedButton(onClick = {
+                                    scope.launch {
+                                        boardGameDao.updateCollection(gameId, !boardGame.inCollection)
                                     }
-                                ) {
+                                }, modifier = if (boardGame.isExpansion) Modifier.fillMaxWidth() else Modifier) {
                                     Text(if (boardGame.inCollection) "Remove from collection" else "Add to collection")
                                 }
 
-                                FilledTonalButton(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = {
+                                if (!boardGame.isExpansion) {
+                                    FilledTonalButton(modifier = Modifier.fillMaxWidth(), onClick = {
                                         navController.navigate(GameNavigation.newGameplayScreen(gameId))
+                                    }) {
+                                        Text("Add play")
                                     }
-                                ) {
-                                    Text("Add play")
                                 }
                             }
 
@@ -157,40 +145,32 @@ fun GameDetailsScreen(
 
                         if (plays.isNotEmpty()) {
                             item {
-                                SectionTitle(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                SectionTitle(modifier = Modifier.padding(horizontal = 16.dp),
                                     title = "Statistics",
                                     onArrowClick = {
                                         navController.navigate(GameNavigation.gameplayStatsScreen(gameId))
-                                    }
-                                )
+                                    })
                                 GameplayStatisticsOverview(stats)
                                 Spacer(modifier = Modifier.height(32.dp))
                             }
 
                             stickyHeader {
-                                SectionTitle(
-                                    modifier = Modifier.padding(
-                                        horizontal = 16.dp,
-                                        vertical = 8.dp
-                                    ), title = "Recent plays", onArrowClick = {
-                                        navController.navigate(GameNavigation.gameplayListScreen(gameId))
-                                    })
+                                SectionTitle(modifier = Modifier.padding(
+                                    horizontal = 16.dp, vertical = 8.dp
+                                ), title = "Recent plays", onArrowClick = {
+                                    navController.navigate(GameNavigation.gameplayListScreen(gameId))
+                                })
                             }
 
                             items(plays.take(2)) { gameplay ->
-                                ListItem(
-                                    headlineContent = { Text(formatter.format(gameplay.gameplay.date)) },
+                                ListItem(headlineContent = { Text(formatter.format(gameplay.gameplay.date)) },
                                     supportingContent = {
-                                        Text(
-                                            gameplay.playerResults.sortedByDescending { it.score }
-                                                .joinToString(", ") { it.playerName + " (" + it.score + ")" }
-                                        )
+                                        Text(gameplay.playerResults.sortedByDescending { it.score }
+                                            .joinToString(", ") { it.playerName + " (" + it.score + ")" })
                                     },
                                     modifier = Modifier.clickable {
                                         navController.navigate(GameNavigation.gameplayDetailsScreen(gameplay.gameplay.id))
-                                    }
-                                )
+                                    })
                             }
 
                             item {
