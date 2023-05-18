@@ -2,6 +2,7 @@
 <resources>
     <style name="Theme.BoardGameStats" parent="android:Theme.Material"/>
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/splash_screen</item>
         <item name="postSplashScreenTheme" value="@style/Theme.BoardGameStats"/>
     </style>
 </resources>
